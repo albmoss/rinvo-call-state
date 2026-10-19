@@ -1,0 +1,28 @@
+============================= test session starts =============================
+platform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.7.0 -- C:\Users\maybach\AppData\Local\Programs\Python\Python312\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\maybach\Desktop\ANTIG\new zadanie
+plugins: anyio-4.13.0
+collecting ... collected 19 items
+
+tests/test_scenarios.py::test_01_calling_window_and_salon_hours_are_specs_not_applied PASSED [  5%]
+tests/test_scenarios.py::test_02_intro_ab_test PASSED                    [ 10%]
+tests/test_scenarios.py::test_02b_reminder_not_surfaced_once_texts_arrived PASSED [ 15%]
+tests/test_scenarios.py::test_03_fresh_leads PASSED                      [ 21%]
+tests/test_scenarios.py::test_04_opel_hold_call_kasia_first PASSED       [ 26%]
+tests/test_scenarios.py::test_05_after_hours PASSED                      [ 31%]
+tests/test_scenarios.py::test_06_freeze PASSED                           [ 36%]
+tests/test_scenarios.py::test_07_contact_rules PASSED                    [ 42%]
+tests/test_scenarios.py::test_08_redial_bug PASSED                       [ 47%]
+tests/test_scenarios.py::test_09_filter_bug_and_column PASSED            [ 52%]
+tests/test_scenarios.py::test_10_invoice_handoff_to_michal PASSED        [ 57%]
+tests/test_scenarios.py::test_11_sms PASSED                              [ 63%]
+tests/test_scenarios.py::test_12_meeting_with_pawel PASSED               [ 68%]
+tests/test_scenarios.py::test_13_cheat_sheet_and_training PASSED         [ 73%]
+tests/test_scenarios.py::test_14_holds_separate PASSED                   [ 78%]
+tests/test_scenarios.py::test_15_standing_rules PASSED                   [ 84%]
+tests/test_scenarios.py::test_16_backlog_no_dates PASSED                 [ 89%]
+tests/test_scenarios.py::test_17_address_fix_message_no_recording PASSED [ 94%]
+tests/test_scenarios.py::test_18_bad_quotes_are_quarantined_and_bad_schema_fails PASSED [100%]
+
+============================= 19 passed ==============================

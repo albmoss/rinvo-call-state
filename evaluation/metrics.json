@@ -1,0 +1,796 @@
+{
+  "gold": "annotation/tama_2026-10-06.gold.json",
+  "pred": "out/grupa_auto_tama/2026-10-06/items.json",
+  "quarantined": 0,
+  "per_type": {
+    "bug": {
+      "gold": 4,
+      "pred": 4,
+      "strict": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 4
+      },
+      "tolerant": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 4,
+        "via_alt_type": 0
+      },
+      "state_strict": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 4
+      },
+      "state_tolerant": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 4
+      }
+    },
+    "config_change": {
+      "gold": 9,
+      "pred": 12,
+      "strict": {
+        "precision": 0.75,
+        "recall": 1.0,
+        "tp": 9
+      },
+      "tolerant": {
+        "precision": 0.9,
+        "recall": 1.0,
+        "tp": 9,
+        "via_alt_type": 0
+      },
+      "state_strict": {
+        "precision": 0.5,
+        "recall": 0.6666666666666666,
+        "tp": 6
+      },
+      "state_tolerant": {
+        "precision": 0.6,
+        "recall": 0.6666666666666666,
+        "tp": 6
+      }
+    },
+    "feature_request": {
+      "gold": 6,
+      "pred": 4,
+      "strict": {
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "tp": 4
+      },
+      "tolerant": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 6,
+        "via_alt_type": 2
+      },
+      "state_strict": {
+        "precision": 1.0,
+        "recall": 0.6666666666666666,
+        "tp": 4
+      },
+      "state_tolerant": {
+        "precision": 0.8333333333333334,
+        "recall": 0.8333333333333334,
+        "tp": 5
+      }
+    },
+    "commitment": {
+      "gold": 11,
+      "pred": 12,
+      "strict": {
+        "precision": 0.9166666666666666,
+        "recall": 1.0,
+        "tp": 11
+      },
+      "tolerant": {
+        "precision": 0.9166666666666666,
+        "recall": 1.0,
+        "tp": 11,
+        "via_alt_type": 0
+      },
+      "state_strict": {
+        "precision": 0.8333333333333334,
+        "recall": 0.9090909090909091,
+        "tp": 10
+      },
+      "state_tolerant": {
+        "precision": 0.8333333333333334,
+        "recall": 0.9090909090909091,
+        "tp": 10
+      }
+    },
+    "follow_up": {
+      "gold": 2,
+      "pred": 2,
+      "strict": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "tolerant": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2,
+        "via_alt_type": 0
+      },
+      "state_strict": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      },
+      "state_tolerant": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 2
+      }
+    },
+    "billing": {
+      "gold": 3,
+      "pred": 3,
+      "strict": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 3
+      },
+      "tolerant": {
+        "precision": 1.0,
+        "recall": 1.0,
+        "tp": 3,
+        "via_alt_type": 0
+      },
+      "state_strict": {
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "tp": 2
+      },
+      "state_tolerant": {
+        "precision": 0.6666666666666666,
+        "recall": 0.6666666666666666,
+        "tp": 2
+      }
+    },
+    "constraint": {
+      "gold": 11,
+      "pred": 11,
+      "strict": {
+        "precision": 0.9090909090909091,
+        "recall": 0.9090909090909091,
+        "tp": 10
+      },
+      "tolerant": {
+        "precision": 0.9090909090909091,
+        "recall": 0.9090909090909091,
+        "tp": 10,
+        "via_alt_type": 0
+      },
+      "state_strict": {
+        "precision": 0.6363636363636364,
+        "recall": 0.6363636363636364,
+        "tp": 7
+      },
+      "state_tolerant": {
+        "precision": 0.6363636363636364,
+        "recall": 0.6363636363636364,
+        "tp": 7
+      }
+    },
+    "account_signal": {
+      "gold": 4,
+      "pred": 3,
+      "strict": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "tp": 3
+      },
+      "tolerant": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "tp": 3,
+        "via_alt_type": 0
+      },
+      "state_strict": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "tp": 3
+      },
+      "state_tolerant": {
+        "precision": 1.0,
+        "recall": 0.75,
+        "tp": 3
+      }
+    },
+    "all": {
+      "gold": 50,
+      "pred": 51,
+      "strict": {
+        "precision": 0.9019607843137255,
+        "recall": 0.92,
+        "tp": 46
+      },
+      "tolerant": {
+        "precision": 0.9411764705882353,
+        "recall": 0.96,
+        "tp": 48,
+        "via_alt_type": 2
+      },
+      "state_strict": {
+        "precision": 0.7450980392156863,
+        "recall": 0.76,
+        "tp": 38
+      },
+      "state_tolerant": {
+        "precision": 0.7647058823529411,
+        "recall": 0.78,
+        "tp": 39
+      }
+    }
+  },
+  "fields": {
+    "state": {
+      "correct": 48,
+      "of": 48
+    },
+    "owner": {
+      "correct": 48,
+      "of": 48
+    },
+    "date": {
+      "correct": 46,
+      "of": 48
+    },
+    "condition": {
+      "correct": 47,
+      "of": 48
+    },
+    "approvers": {
+      "correct": 41,
+      "of": 48
+    },
+    "limit": {
+      "correct": 48,
+      "of": 48
+    },
+    "revised": {
+      "correct": 48,
+      "of": 48
+    },
+    "known": {
+      "correct": 46,
+      "of": 48
+    }
+  },
+  "errors": [
+    {
+      "kind": "missed",
+      "gold": "G50",
+      "type": "account_signal",
+      "title": "Recordings are worse than the dashboard suggests"
+    },
+    {
+      "kind": "invented",
+      "pred": "2026-10-06/I18",
+      "type": "constraint",
+      "title": "Paweł nie zatwierdza Opla ani tekstu wstępu"
+    },
+    {
+      "kind": "invented",
+      "pred": "2026-10-06/I43",
+      "type": "commitment",
+      "title": "Zapytać Pawła o nazwę firmy w przykładzie 208"
+    },
+    {
+      "kind": "wrong_approvers",
+      "gold": "G09",
+      "pred": "2026-10-06/I21",
+      "title": "Launch the fresh-leads campaign when the file arrives",
+      "expected": [
+        "Kasia"
+      ],
+      "got": []
+    },
+    {
+      "kind": "wrong_approvers",
+      "gold": "G12",
+      "pred": "2026-10-06/I37",
+      "title": "SMS after two failed call attempts",
+      "expected": [
+        "Paweł"
+      ],
+      "got": [
+        "Kasia",
+        "Paweł"
+      ]
+    },
+    {
+      "kind": "wrong_approvers",
+      "gold": "G43",
+      "pred": "2026-10-06/I35",
+      "title": "Second-hand go-aheads for after-hours are not valid",
+      "expected": [
+        "Kasia"
+      ],
+      "got": []
+    },
+    {
+      "kind": "wrong_approvers",
+      "gold": "G44",
+      "pred": "2026-10-06/I38",
+      "title": "Kasia writes customer-facing copy; Rinvo does not",
+      "expected": [
+        "Kasia"
+      ],
+      "got": []
+    },
+    {
+      "kind": "wrong_condition",
+      "gold": "G45",
+      "pred": "2026-10-06/I44",
+      "title": "Case study only without the company name until Paweł approves",
+      "expected": "Paweł approves using the company name.",
+      "got": null
+    },
+    {
+      "kind": "wrong_approvers",
+      "gold": "G45",
+      "pred": "2026-10-06/I44",
+      "title": "Case study only without the company name until Paweł approves",
+      "expected": [
+        "Paweł"
+      ],
+      "got": []
+    },
+    {
+      "kind": "wrong_date",
+      "gold": "G33",
+      "pred": "2026-10-06/I14",
+      "title": "September invoice issued to the wrong legal entity",
+      "expected": {
+        "kind": "window",
+        "start": "2026-10-12",
+        "end": "2026-10-16"
+      },
+      "got": {
+        "kind": "by",
+        "start": null,
+        "end": "2026-10-16"
+      }
+    },
+    {
+      "kind": "wrong_approvers",
+      "gold": "G28",
+      "pred": "2026-10-06/I42",
+      "title": "Meeting with Paweł on Thursday 15 October, 10:00",
+      "expected": [
+        "Paweł"
+      ],
+      "got": []
+    },
+    {
+      "kind": "alt_type",
+      "gold": "G18",
+      "pred": "2026-10-06/I32",
+      "title": "After-hours inbound agent",
+      "expected": "feature_request",
+      "got": "config_change"
+    },
+    {
+      "kind": "wrong_known",
+      "gold": "G18",
+      "pred": "2026-10-06/I32",
+      "title": "After-hours inbound agent",
+      "expected": "known_previous_call",
+      "got": "new"
+    },
+    {
+      "kind": "alt_type",
+      "gold": "G14",
+      "pred": "2026-10-06/I26",
+      "title": "Validation email: model and showroom at the top",
+      "expected": "feature_request",
+      "got": "config_change"
+    },
+    {
+      "kind": "wrong_date",
+      "gold": "G14",
+      "pred": "2026-10-06/I26",
+      "title": "Validation email: model and showroom at the top",
+      "expected": null,
+      "got": {
+        "kind": "not_before",
+        "start": "2026-10-12",
+        "end": null
+      }
+    },
+    {
+      "kind": "wrong_type",
+      "gold": "G36",
+      "pred": "2026-10-06/I10",
+      "title": "Retry limit stays at five attempts",
+      "expected": "constraint",
+      "got": "config_change"
+    },
+    {
+      "kind": "wrong_state",
+      "gold": "G36",
+      "pred": "2026-10-06/I10",
+      "title": "Retry limit stays at five attempts",
+      "expected": "active",
+      "got": "rejected"
+    },
+    {
+      "kind": "wrong_known",
+      "gold": "G36",
+      "pred": "2026-10-06/I10",
+      "title": "Retry limit stays at five attempts",
+      "expected": "known_previous_call",
+      "got": "new"
+    },
+    {
+      "kind": "wrong_approvers",
+      "gold": "G08",
+      "pred": "2026-10-06/I01",
+      "title": "Manual A/B test of two opening scripts",
+      "expected": [
+        "Kasia"
+      ],
+      "got": []
+    },
+    {
+      "kind": "wrong_known",
+      "gold": "G01",
+      "pred": "2026-10-06/I09",
+      "title": "Same-day retry after a hang-up within 3 seconds",
+      "expected": "new",
+      "got": "known_previous_call"
+    }
+  ],
+  "pairs": [
+    {
+      "gold": "G03",
+      "pred": "2026-10-06/I05",
+      "overlap": 1.0,
+      "gold_title": "Agent stopped responding and asked about the model twice",
+      "pred_title": "Agent drugi raz pyta o model"
+    },
+    {
+      "gold": "G09",
+      "pred": "2026-10-06/I21",
+      "overlap": 1.0,
+      "gold_title": "Launch the fresh-leads campaign when the file arrives",
+      "pred_title": "Start walidacji świeżych leadów"
+    },
+    {
+      "gold": "G12",
+      "pred": "2026-10-06/I37",
+      "overlap": 1.0,
+      "gold_title": "SMS after two failed call attempts",
+      "pred_title": "SMS po dwóch nieudanych próbach połączenia"
+    },
+    {
+      "gold": "G16",
+      "pred": "2026-10-06/I29",
+      "overlap": 1.0,
+      "gold_title": "Dashboard tile click-through to the matching contacts",
+      "pred_title": "Kliknięcie w kafelek przenosi do listy kontaktów"
+    },
+    {
+      "gold": "G19",
+      "pred": "2026-10-06/I40",
+      "overlap": 1.0,
+      "gold_title": "Integration with the dealer's CRM",
+      "pred_title": "Integracja z systemem (CRM) dealera"
+    },
+    {
+      "gold": "G21",
+      "pred": "2026-10-06/I19",
+      "overlap": 1.0,
+      "gold_title": "Kasia sends the fresh-leads file",
+      "pred_title": "Kasia przysyła plik ze świeżymi leadami"
+    },
+    {
+      "gold": "G23",
+      "pred": "2026-10-06/I33",
+      "overlap": 1.0,
+      "gold_title": "Kasia sends assistance numbers and the field list (not a go-ahead)",
+      "pred_title": "Kasia przysyła numery assistance i listę pól"
+    },
+    {
+      "gold": "G24",
+      "pred": "2026-10-06/I41",
+      "overlap": 1.0,
+      "gold_title": "Kasia passes the meeting proposal to Paweł and confirms",
+      "pred_title": "Kasia przekazuje Pawłowi propozycję spotkania i potwierdza"
+    },
+    {
+      "gold": "G25",
+      "pred": "2026-10-06/I36",
+      "overlap": 1.0,
+      "gold_title": "Marek sends the SMS price",
+      "pred_title": "Cena SMS-ów dla Kasi"
+    },
+    {
+      "gold": "G26",
+      "pred": "2026-10-06/I07",
+      "overlap": 1.0,
+      "gold_title": "Marek tells Kasia when the knowledge base is fixed",
+      "pred_title": "Informacja dla Kasi, że adres jest poprawiony"
+    },
+    {
+      "gold": "G27",
+      "pred": "2026-10-06/I11",
+      "overlap": 1.0,
+      "gold_title": "Marek reports the number of duplicate calls with the bug outcome",
+      "pred_title": "Liczba podwójnych połączeń dla Kasi"
+    },
+    {
+      "gold": "G29",
+      "pred": "2026-10-06/I48",
+      "overlap": 1.0,
+      "gold_title": "Marek sends a one-page cheat sheet of lead statuses",
+      "pred_title": "Ściąga ze statusami dla handlowców"
+    },
+    {
+      "gold": "G31",
+      "pred": "2026-10-06/I03",
+      "overlap": 1.0,
+      "gold_title": "One reminder if the opening texts have not arrived by Thursday",
+      "pred_title": "Jedno przypomnienie o tekstach wstępu"
+    },
+    {
+      "gold": "G32",
+      "pred": "2026-10-06/I20",
+      "overlap": 1.0,
+      "gold_title": "One email if the fresh-leads file has not arrived on Monday",
+      "pred_title": "Jeden mail, jeśli pliku nie będzie w poniedziałek"
+    },
+    {
+      "gold": "G34",
+      "pred": "2026-10-06/I12",
+      "overlap": 1.0,
+      "gold_title": "Check how calls under 3 seconds are metered",
+      "pred_title": "Sprawdzenie naliczania minut przy krótkich połączeniach"
+    },
+    {
+      "gold": "G37",
+      "pred": "2026-10-06/I22",
+      "overlap": 1.0,
+      "gold_title": "Do not send Kasia a file template",
+      "pred_title": "Nie wysyłać wzoru pliku"
+    },
+    {
+      "gold": "G38",
+      "pred": "2026-10-06/I23",
+      "overlap": 1.0,
+      "gold_title": "Do not call the old lead list again",
+      "pred_title": "Nie puszczać drugi raz starej bazy"
+    },
+    {
+      "gold": "G39",
+      "pred": "2026-10-06/I27",
+      "overlap": 1.0,
+      "gold_title": "No direct contact with Ola; everything goes through Kasia",
+      "pred_title": "Nie pisać do Oli, wszystko przez Kasię"
+    },
+    {
+      "gold": "G42",
+      "pred": "2026-10-06/I34",
+      "overlap": 1.0,
+      "gold_title": "Hold after-hours materials; do not connect them",
+      "pred_title": "Nie podpinać numerów assistance ani listy pól"
+    },
+    {
+      "gold": "G43",
+      "pred": "2026-10-06/I35",
+      "overlap": 1.0,
+      "gold_title": "Second-hand go-aheads for after-hours are not valid",
+      "pred_title": "Nie wierzyć przekazom z drugiej ręki o starcie po godzinach"
+    },
+    {
+      "gold": "G44",
+      "pred": "2026-10-06/I38",
+      "overlap": 1.0,
+      "gold_title": "Kasia writes customer-facing copy; Rinvo does not",
+      "pred_title": "Teksty dla klientów pisze Kasia"
+    },
+    {
+      "gold": "G45",
+      "pred": "2026-10-06/I44",
+      "overlap": 1.0,
+      "gold_title": "Case study only without the company name until Paweł approves",
+      "pred_title": "Przykład 208 tylko bez nazwiska i nazwy firmy"
+    },
+    {
+      "gold": "G46",
+      "pred": "2026-10-06/I47",
+      "overlap": 1.0,
+      "gold_title": "A callback request is a lead, not a refusal",
+      "pred_title": "„Oddzwońcie po urlopie” to lead, nie odmowa"
+    },
+    {
+      "gold": "G48",
+      "pred": "2026-10-06/I46",
+      "overlap": 1.0,
+      "gold_title": "Paweł wanted to switch the service off after 9 of 70",
+      "pred_title": "Ryzyko: Paweł patrzy na liczby i chciał wszystko wyłączyć"
+    },
+    {
+      "gold": "G11",
+      "pred": "2026-10-06/I17",
+      "overlap": 0.997,
+      "gold_title": "Opel stays off",
+      "pred_title": "Włączenie Opla wstrzymane"
+    },
+    {
+      "gold": "G15",
+      "pred": "2026-10-06/I04",
+      "overlap": 0.996,
+      "gold_title": "Self-service A/B tests in the panel",
+      "pred_title": "Wbudowane testy A/B w panelu"
+    },
+    {
+      "gold": "G13",
+      "pred": "2026-10-06/I30",
+      "overlap": 0.996,
+      "gold_title": "Contact list: name column right after status",
+      "pred_title": "Nazwisko zaraz po statusie na liście kontaktów"
+    },
+    {
+      "gold": "G47",
+      "pred": "2026-10-06/I39",
+      "overlap": 0.996,
+      "gold_title": "Competitor VoiceDesk pitched Paweł",
+      "pred_title": "Konkurent VoiceDesk u Pawła"
+    },
+    {
+      "gold": "G33",
+      "pred": "2026-10-06/I14",
+      "overlap": 0.996,
+      "gold_title": "September invoice issued to the wrong legal entity",
+      "pred_title": "Korekta faktury za wrzesień na właściwą spółkę"
+    },
+    {
+      "gold": "G49",
+      "pred": "2026-10-06/I45",
+      "overlap": 0.995,
+      "gold_title": "Success: Peugeot 208 sold after a bot call",
+      "pred_title": "Sukces: sprzedaż Peugeota 208 po rozmowie z botem"
+    },
+    {
+      "gold": "G30",
+      "pred": "2026-10-06/I49",
+      "overlap": 0.994,
+      "gold_title": "15-minute status training for salespeople",
+      "pred_title": "Krótkie szkolenie online dla handlowców"
+    },
+    {
+      "gold": "G28",
+      "pred": "2026-10-06/I42",
+      "overlap": 0.994,
+      "gold_title": "Meeting with Paweł on Thursday 15 October, 10:00",
+      "pred_title": "Zaproszenie Pawła na spotkanie"
+    },
+    {
+      "gold": "G02",
+      "pred": "2026-10-06/I28",
+      "overlap": 0.994,
+      "gold_title": "Status filter \"zainteresowany\" does not narrow the contact list",
+      "pred_title": "Filtr statusu „zainteresowany” nie zawęża listy"
+    },
+    {
+      "gold": "G17",
+      "pred": "2026-10-06/I31",
+      "overlap": 0.991,
+      "gold_title": "Weekly email report to Paweł",
+      "pred_title": "Cotygodniowy raport mailowy do Pawła"
+    },
+    {
+      "gold": "G35",
+      "pred": "2026-10-06/I13",
+      "overlap": 0.989,
+      "gold_title": "Credit the duplicate calls if they were our error",
+      "pred_title": "Odjęcie podwójnych połączeń z rozliczenia, jeśli to błąd Rinvo"
+    },
+    {
+      "gold": "G41",
+      "pred": "2026-10-06/I51",
+      "overlap": 0.979,
+      "gold_title": "Freeze during Kasia's holiday, 19-23 October",
+      "pred_title": "Urlop Kasi: nic nowego nie startuje"
+    },
+    {
+      "gold": "G06",
+      "pred": "2026-10-06/I08",
+      "overlap": 0.943,
+      "gold_title": "Knowledge base: Saturday showroom hours 9:00-15:00 for both showrooms",
+      "pred_title": "Sobotnie godziny salonów w bazie wiedzy do 15:00"
+    },
+    {
+      "gold": "G18",
+      "pred": "2026-10-06/I32",
+      "overlap": 1.0,
+      "gold_title": "After-hours inbound agent",
+      "pred_title": "Agent po godzinach"
+    },
+    {
+      "gold": "G40",
+      "pred": "2026-10-06/I50",
+      "overlap": 0.822,
+      "gold_title": "The agent does not sell",
+      "pred_title": "Agent nie sprzedaje i nie proponuje aut używanych"
+    },
+    {
+      "gold": "G14",
+      "pred": "2026-10-06/I26",
+      "overlap": 0.91,
+      "gold_title": "Validation email: model and showroom at the top",
+      "pred_title": "Model i salon na górze maila do handlowców"
+    },
+    {
+      "gold": "G07",
+      "pred": "2026-10-06/I15",
+      "overlap": 0.787,
+      "gold_title": "Calling hours: weekdays 9:00-19:00, Saturday 9:00-15:00, no Sunday",
+      "pred_title": "Skrócenie okna dzwonienia"
+    },
+    {
+      "gold": "G05",
+      "pred": "2026-10-06/I06",
+      "overlap": 0.755,
+      "gold_title": "Knowledge base: Włocławek showroom address",
+      "pred_title": "Poprawa adresu salonu we Włocławku w bazie wiedzy"
+    },
+    {
+      "gold": "G36",
+      "pred": "2026-10-06/I10",
+      "overlap": 1.0,
+      "gold_title": "Retry limit stays at five attempts",
+      "pred_title": "Obniżenie limitu prób z 5 do 3 (odrzucone)"
+    },
+    {
+      "gold": "G04",
+      "pred": "2026-10-06/I25",
+      "overlap": 0.747,
+      "gold_title": "Service request (inspection) delivered to the dealer as a sales lead",
+      "pred_title": "Rozmowa o przeglądzie oznaczona jako lead sprzedażowy"
+    },
+    {
+      "gold": "G10",
+      "pred": "2026-10-06/I16",
+      "overlap": 0.733,
+      "gold_title": "Move the first call attempt to lunchtime",
+      "pred_title": "Przesunięcie pierwszej próby na przerwę obiadową"
+    },
+    {
+      "gold": "G08",
+      "pred": "2026-10-06/I01",
+      "overlap": 0.729,
+      "gold_title": "Manual A/B test of two opening scripts",
+      "pred_title": "Test wstępu rozmowy w dwóch wersjach"
+    },
+    {
+      "gold": "G01",
+      "pred": "2026-10-06/I09",
+      "overlap": 0.725,
+      "gold_title": "Same-day retry after a hang-up within 3 seconds",
+      "pred_title": "Drugi telefon tego samego dnia po rozłączeniu w ciągu 3 sekund"
+    },
+    {
+      "gold": "G20",
+      "pred": "2026-10-06/I02",
+      "overlap": 0.683,
+      "gold_title": "Kasia writes and sends both opening texts",
+      "pred_title": "Kasia przysyła obie wersje tekstu wstępu"
+    },
+    {
+      "gold": "G22",
+      "pred": "2026-10-06/I24",
+      "overlap": 0.328,
+      "gold_title": "Kasia forwards Ola's misrouted service case if Ola finds it",
+      "pred_title": "Kasia przesyła sprawę przeglądu od Oli"
+    }
+  ]
+}

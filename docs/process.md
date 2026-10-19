@@ -1,69 +1,62 @@
-# Process: from call transcript to actions
+# Process: from call transcript to the client record
 
 ```mermaid
 flowchart TD
-    T[Transcript file] --> P[Parse: speakers, turns, call date, participants, absent people]
-    L[(Customer ledger:<br/>open items + constraints<br/>from earlier calls)] --> X
-    B[(Product backlog)] -.production.-> D
-    C[(Config export,<br/>call log, invoices)] -.production.-> K
-    P --> X[Extract items with an LLM<br/>scheme prompt, verbatim quotes]
-    X --> V{Validate:<br/>quotes exist verbatim<br/>for that speaker,<br/>schema, state rules}
-    V -- errors --> R[One repair pass<br/>with the validator's errors] --> V
-    V -- no verifiable quote --> Q[Quarantine:<br/>review queue only]
-    V --> DT[Resolve dates by rule<br/>from the call date,<br/>compare with model]
-    DT --> K[Check claims:<br/>calendar now,<br/>config / call log / invoice<br/>when data exists]
-    K --> D[Deduplicate:<br/>within the call by quote overlap,<br/>against the ledger by id and title,<br/>against the backlog]
-    D --> G[Guard: every dated action<br/>checked against active constraints]
-    G --> RT{Route by type and state}
-
-    RT -- bug, billing,<br/>Rinvo commitment --> TK[Ticket drafts]
-    RT -- config_change --> CR[Change requests<br/>with customer's approving quote]
-    RT -- follow_up --> RM[Reminder proposals<br/>deadline, max count, channel]
-    RT -- customer visible --> EM[Recap email draft, Polish]
-    RT -- account_signal,<br/>absent owner, ambiguity --> AL[Internal alerts]
-    RT -- constraint --> CS[Constraint registry entries]
-    RT -- feature_request --> BL[Backlog entry or vote]
-
-    TK --> H1([Human: triage]) --> TOOLS1[Issue tracker]
-    CR --> H2([Human: approve,<br/>then execute by hand]) --> TOOLS2[Agent configuration]
-    RM --> H3([Human: approve schedule]) --> SCH[Scheduler] --> PC{On the day:<br/>did the awaited thing arrive?}
-    PC -- yes --> CANCEL[Cancel]
-    PC -- no --> SEND[Send once, count against max]
-    EM --> H4([Human: edit and send]) --> MAIL[Email]
-    AL --> SL[Internal channel]
-    CS --> H5([Human: confirm entry]) --> L
-    BL --> H6([Human: merge with existing request]) --> B
-    TK & CR & RM --> LG[Write ledger for this call]
-    LG --> L
-    L --> NB[Next call brief:<br/>what we owe, what we wait for,<br/>what is on hold, what is forbidden]
-
-    classDef built fill:none,stroke-width:3px
-    class P,X,V,R,Q,DT,K,D,G,RT,TK,CR,RM,EM,AL,CS,LG,NB built
+    T[Transcript file] --> P[Parse: call date, participants,<br/>absent people, context lines, turns]
+    DB[(SQLite ledger<br/>account, items, events)] -- previous record --> X
+    P --> X[One Claude call, structured output:<br/>account, items, updates to the previous record]
+    X --> V{Validate in code}
+    V -- schema errors --> R[One repair pass<br/>with the validator's errors] --> V2{Validate again}
+    V2 -- schema errors remain --> FAIL[Fail loudly. Nothing ingested]
+    V -- ok --> Q
+    V2 -- ok --> Q[Quote check per item and per account entry:<br/>exact text, cited line, cited speaker]
+    Q -- not found --> QU[Quarantine]
+    Q --> D[Resolve relative time by rule<br/>from the call date, Europe/Warsaw]
+    D --> CK[Checks: freeze windows vs launches,<br/>handoffs to absent people, duplicates]
+    CK --> ING[Ingest: supersede older facts and items,<br/>apply closes from this call, store conflicts]
+    QU --> ING
+    ING --> DB
+    DB --> AUTO[Filed without a click:<br/>dev tickets, backlog entries, constraint registry,<br/>reminders as due dates, meeting and pre-call briefs]
+    DB --> DR[Drafts: recap email, messages to the client,<br/>handoffs, change specs]
+    DB --> REV([Daily review, one person])
+    DR --> REV
+    REV --> OUT[Person sends drafts, applies change specs,<br/>marks received / done / sent]
+    OUT -- events --> DB
 ```
 
-Thick borders mark what this repository builds. Dotted inputs (backlog, configuration export, call log) are wired in the design but not in the slice, because no such data was provided with this call. Everything to the right of a human step is outside the slice: the system writes drafts, never sends or changes anything.
+## Legend
 
-## Where humans approve
-
-| Step | Who | What they check |
+| | What | Where it appears |
 |---|---|---|
-| Change request | Account manager, then whoever executes | The customer's quote really approves this exact value; conditions hold; no active constraint blocks it |
-| Recap email | Account manager | Every line was agreed; nothing internal leaks; tone |
-| Reminder schedule | Account manager | Count and channel match what the customer asked for; the pre-send check is clear |
-| Credit or invoice correction | Finance | The error is ours; amount |
-| New constraint | Account manager | Wording and validity window, since it binds every later action |
-| Quarantined item | Account manager | Whether the model invented it or misquoted a real item |
+| Runs automatically | Extraction, quote checks, date resolution, the client record (people, who decides what, current facts), dev tickets, backlog entries, constraint registry, reminders as due dates, meeting brief, pre-call brief | `out/<client>/<date>/`, panel: Today, Client, Waiting on client |
+| Comes out as a draft | Recap email and messages in Polish, handoffs to colleagues, configuration change specs, credits and invoice corrections | panel: Drafts and Daily review, `out/.../drafts/`, `change_specs.md` |
+| One human step | The daily review: send drafts, apply specs, mark received / done / sent | panel: Daily review |
+| Never done by the system | Send anything to the client, change the client's configuration, launch campaigns, touch money | |
 
-## Deduplication
+## What runs on its own
 
-- **Within the call.** A closing summary repeats earlier agreements. The prompt treats repeats as confirmation evidence, and the validator flags two items of the same type whose quotes overlap by half or more.
-- **Against the previous call.** The previous ledger goes into the prompt with item ids. The model links an item with `previous_id`; the code checks that the id exists and, when no link is given, flags items whose titles resemble a previous item of the same type. Linked items replace the earlier version in the new ledger.
-- **Against the backlog.** In production, feature requests are matched against the backlog before filing, so a known request gets a vote and the customer's success measure instead of a new ticket. The slice marks requests the call itself calls known ("other customers asked") as `known_other_customers`.
+Every transcript produces, without a human step: dev tickets with the reported evidence (`dev_tickets.md`), backlog entries with the client's success metric and a "no deadline promised" flag (`backlog.md`), the constraint registry, reminders, the client view, a brief for every meeting other items point to, and a pre-call brief for the next call.
 
-## Carry-over to the next call
+A reminder is a due date on a `follow_up` item that watches a client commitment. On the due day it appears in the owner's Today view with its Polish draft, but only if the watched commitment has not been marked received and the reminder has been sent fewer times than its `max_count`. There is no scheduler.
 
-`ledger.json` is written for every call under `out/<customer>/<date>/`. On the next run for the same customer the newest earlier ledger is loaded automatically:
+## The one human step: the daily review
 
-1. Open, conditional, pending, deferred and blocked items are passed to the model as context and carried into the new ledger unless the new call updates or closes them.
-2. Active constraints are carried until their window ends (a holiday freeze ending on 23 October is dropped from a call on 26 October) or until the named approver lifts them in a later call.
-3. `next_call_brief.md` lists what Rinvo owes, what the customer owes, what is waiting for whom, and every constraint in force, so the account manager opens the next call with the state rather than with the last recap.
+Anything that would reach the client, change the client's configuration, or move money leaves the system only as a draft. One person opens the daily review (`/review` or `python -m callstate review`) and sees:
+
+| Section | Content |
+|---|---|
+| Drafts ready to send | Recap email, messages whose item is actionable, reminders due today, handoffs to colleagues |
+| Due today, per assignee | Rinvo items due or overdue, conditional items whose date came, client items that are late |
+| Quarantined | Items and account entries whose quote is not on the cited line for the cited speaker |
+| Ambiguities | Places the call left unclear, with the reading the model chose |
+| Constraint conflicts | Launches dated inside a freeze window, conflicts with earlier agreements found in a later call |
+
+Sending a draft, applying a change spec, or noticing that a file arrived is recorded as an event (`sent`, `done`, `received`, `condition_met`). Events drive the next day's view.
+
+## Requests from other people
+
+`/client` has a request check, also `python -m callstate check --sender NAME --text "..."`. The message is matched against holds and constraints by their keywords. If the sender is not among the approvers in the authority matrix for that item, the answer is "cannot approve, confirm with X first" plus the rule from the call. Nothing changes.
+
+## Later calls
+
+The next transcript for the same client is processed against the stored record. The prompt carries the authority matrix, current facts and live items with their ids. The model returns `previous_id` for items that continue, `previous_updates` for items this call closes or changes, and `conflicts` with earlier agreements. Ingest marks older facts with the same key as superseded and links them, sets the new state on updated items, and keeps both versions. Conflicts go to the daily review.

@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+callstate.db
+.pytest_cache/
+out/

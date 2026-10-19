@@ -1,0 +1,582 @@
+{
+  "call": {
+    "customer": "Grupa Auto Tama",
+    "customer_contact": "Kasia Malinowska",
+    "customer_contact_vocative_pl": "Kasiu",
+    "rinvo_contact": "Marek Rewoliński"
+  },
+  "account": {
+    "people": [
+      {
+        "name": "Kasia Malinowska",
+        "side": "customer",
+        "role": "BDC",
+        "present": true,
+        "email": "kasia.malinowska@autotama.pl",
+        "evidence": [
+          {"speaker": "context", "line": 8, "quote": "BDC, Grupa Auto Tama, kasia.malinowska@autotama.pl", "role": "origin"}
+        ]
+      },
+      {
+        "name": "Marek Rewoliński",
+        "side": "rinvo",
+        "role": "Rinvo, opiekun klienta",
+        "present": true,
+        "email": "marek@rinvo.io",
+        "evidence": [
+          {"speaker": "context", "line": 9, "quote": "Rinvo, marek@rinvo.io", "role": "origin"}
+        ]
+      },
+      {
+        "name": "Paweł",
+        "side": "customer",
+        "role": "przełożony Kasi",
+        "present": false,
+        "email": "paweł@autotama.pl",
+        "evidence": [
+          {"speaker": "context", "line": 11, "quote": "(przełożony Kasi)", "role": "origin"},
+          {"speaker": "Kasia", "line": 25, "quote": "możesz wysłać zaproszenie na paweł@autotama.pl.", "role": "origin"}
+        ]
+      },
+      {
+        "name": "Ola",
+        "side": "customer",
+        "role": "handlowiec",
+        "present": false,
+        "email": "",
+        "evidence": [
+          {"speaker": "context", "line": 11, "quote": "(handlowiec)", "role": "origin"},
+          {"speaker": "Kasia", "line": 29, "quote": "Ola pisała do ciebie, że po godzinach ruszamy od listopada?", "role": "origin"}
+        ]
+      },
+      {
+        "name": "Michał",
+        "side": "rinvo",
+        "role": "wspólnik Marka w Rinvo",
+        "present": false,
+        "email": "",
+        "evidence": [
+          {"speaker": "context", "line": 11, "quote": "(wspólnik Marka w Rinvo)", "role": "origin"}
+        ]
+      }
+    ],
+    "authority": [
+      {
+        "key": "customer_copy",
+        "decision": "Treść wstępu dla klientów końcowych i sposób puszczenia testu wstępu (podział wersji, start)",
+        "approvers": ["Kasia"],
+        "not_authorized": ["Paweł"],
+        "evidence": [
+          {"speaker": "Kasia", "line": 17, "quote": "Wstęp puśćcie od czwartku, na dwa miasta, nie na dwa dni.", "role": "confirmation"}
+        ]
+      },
+      {
+        "key": "after_hours",
+        "decision": "Start agenta po godzinach i powrót do tematu",
+        "approvers": ["Kasia"],
+        "not_authorized": ["Ola"],
+        "evidence": [
+          {"speaker": "Marek", "line": 31, "quote": "Odpisałem, że czekam na ciebie.", "role": "confirmation"},
+          {"speaker": "Kasia", "line": 33, "quote": "Dobrze. Nie ruszamy.", "role": "final"}
+        ]
+      },
+      {
+        "key": "meeting_confirmation",
+        "decision": "Potwierdzenie terminu spotkania Marka z Pawłem",
+        "approvers": ["Kasia"],
+        "not_authorized": [],
+        "evidence": [
+          {"speaker": "Kasia", "line": 25, "quote": "Paweł potwierdził czwartek o dziesiątej, możesz wysłać zaproszenie na paweł@autotama.pl.", "role": "confirmation"}
+        ]
+      },
+      {
+        "key": "brands",
+        "decision": "Włączenie Opla w agencie",
+        "approvers": ["Kasia"],
+        "not_authorized": ["Paweł"],
+        "evidence": [
+          {"speaker": "Kasia", "line": 33, "quote": "A Opel dalej stoi.", "role": "confirmation"}
+        ]
+      }
+    ],
+    "facts": [
+      {
+        "key": "kb_address_wloclawek",
+        "subject": "Adres salonu we Włocławku w bazie wiedzy",
+        "value": "ul. Toruńska 120 (poprawione, Kasia sprawdziła, agent mówi dobrze)",
+        "status": "current",
+        "evidence": [
+          {"speaker": "Marek", "line": 15, "quote": "Adres i godziny poprawione, pisałem ci.", "role": "final"},
+          {"speaker": "Kasia", "line": 17, "quote": "Tak, sprawdziłam, mówi dobrze.", "role": "confirmation"}
+        ]
+      },
+      {
+        "key": "kb_hours_saturday",
+        "subject": "Sobotnie godziny salonów w bazie wiedzy",
+        "value": "9:00–15:00 dla obu salonów (poprawione, Kasia sprawdziła)",
+        "status": "current",
+        "evidence": [
+          {"speaker": "Marek", "line": 15, "quote": "Adres i godziny poprawione, pisałem ci.", "role": "final"},
+          {"speaker": "Kasia", "line": 17, "quote": "Tak, sprawdziłam, mówi dobrze.", "role": "confirmation"}
+        ]
+      },
+      {
+        "key": "intro_test_split",
+        "subject": "Test dwóch wersji wstępu",
+        "value": "od czwartku, podział na dwa miasta (Toruń jedna wersja, Włocławek druga), nie na dwa dni",
+        "status": "pending_change",
+        "evidence": [
+          {"speaker": "Kasia", "line": 17, "quote": "Wstęp puśćcie od czwartku, na dwa miasta, nie na dwa dni.", "role": "origin"},
+          {"speaker": "Marek", "line": 19, "quote": "Dobra, od czwartku, Toruń jedna wersja, Włocławek druga.", "role": "confirmation"}
+        ]
+      },
+      {
+        "key": "agent_brands",
+        "subject": "Marki w agencie",
+        "value": "Opel dalej wstrzymany (niepodpięty)",
+        "status": "current",
+        "evidence": [
+          {"speaker": "Kasia", "line": 33, "quote": "A Opel dalej stoi.", "role": "final"},
+          {"speaker": "Marek", "line": 35, "quote": "Opel stoi. Na razie.", "role": "confirmation"}
+        ]
+      },
+      {
+        "key": "after_hours_coverage",
+        "subject": "Agent po godzinach",
+        "value": "brak agenta po godzinach; start nie rusza (także nie od listopada)",
+        "status": "current",
+        "evidence": [
+          {"speaker": "Kasia", "line": 33, "quote": "Dobrze. Nie ruszamy.", "role": "final"}
+        ]
+      }
+    ]
+  },
+  "items": [
+    {
+      "local_id": "I01",
+      "type": "config_change",
+      "state": "open",
+      "title": "Start testu dwóch wersji wstępu od czwartku, podział na miasta",
+      "owner_party": "rinvo",
+      "owner_person": "Marek",
+      "action": "Uruchomić test wstępu od czwartku: w Toruniu jedna wersja, we Włocławku druga (podział na miasta, nie na dni).",
+      "when": {"kind": "on", "phrase": "od czwartku", "tense": "future", "anchor": ""},
+      "condition": {
+        "text": "Teksty dotarły i Kasia dała zgodę na start od czwartku; podział na dwa miasta, nie na dwa dni; zgodę na tekst daje tylko Kasia, nie Paweł; w urlopie Kasi (19 do 23) nic nowego nie startuje ani się nie zmienia.",
+        "phrase": "na dwa miasta, nie na dwa dni"
+      },
+      "authority_keys": ["customer_copy"],
+      "if_others_ask": "Jeśli ktoś inny niż Kasia (np. Paweł w czasie jej urlopu) prosi o zmianę tekstu wstępu lub podziału testu, nie zmieniać; poczekać na Kasię.",
+      "keywords": ["wstęp", "wstępu", "test", "wersja", "wersje", "Toruń", "Włocławek", "czwartku", "dwa miasta", "dwa dni"],
+      "launch": true,
+      "freeze": false,
+      "watches": "",
+      "max_count": 0,
+      "channel": "",
+      "target": "Test wstępu rozmowy: podział wersji i start",
+      "current_value": "",
+      "new_value": "od czwartku, Toruń jedna wersja, Włocławek druga (na dwa miasta, nie na dwa dni)",
+      "success_metric": "",
+      "no_deadline_promised": false,
+      "evidence": [
+        {"speaker": "Marek", "line": 15, "quote": "Teksty wstępu przyszły w czwartek, dzięki.", "role": "condition"},
+        {"speaker": "Kasia", "line": 17, "quote": "Wstęp puśćcie od czwartku, na dwa miasta, nie na dwa dni.", "role": "final"},
+        {"speaker": "Marek", "line": 19, "quote": "Dobra, od czwartku, Toruń jedna wersja, Włocławek druga.", "role": "confirmation"}
+      ],
+      "revised": false,
+      "known": "known_previous_call",
+      "known_basis": "Teksty wstępu przyszły w czwartek, dzięki.",
+      "customer_visible": true,
+      "claims": [
+        {"text": "Obie wersje tekstu wstępu dotarły do Rinvo w czwartek.", "source": "other", "line": 15, "quote": "Teksty wstępu przyszły w czwartek, dzięki.", "time_phrase": "w czwartek"}
+      ],
+      "ambiguities": [
+        "Nie powiedziano, która wersja idzie do Torunia, a która do Włocławka; przyjęto: pierwsza wersja Toruń, druga Włocławek, do potwierdzenia przez osobę przeglądającą lub Kasię przed startem.",
+        "Test wystartuje przed urlopem Kasi (19 do 23) i będzie trwał w jego trakcie; przyjęto, że zakaz z urlopu dotyczy startu nowych rzeczy, więc test może dalej działać, ale bez zmian tekstu czy podziału do powrotu Kasi.",
+        "„nie na dwa dni” sugeruje wcześniejszy pomysł podziału po dniach, którego nie ma w poprzednim rekordzie; przyjęto podział po miastach jako obowiązujący."
+      ],
+      "related": [],
+      "brief_for": [],
+      "previous_id": "2026-10-06/I01",
+      "recap_pl": "Test wstępu puszczamy od czwartku: w Toruniu jedna wersja, we Włocławku druga.",
+      "message": {"to": "", "subject_pl": "", "body_pl": ""}
+    },
+    {
+      "local_id": "I02",
+      "type": "commitment",
+      "state": "open",
+      "title": "Kasia przysyła plik ze świeżymi leadami do środy",
+      "owner_party": "customer",
+      "owner_person": "Kasia",
+      "action": "Kasia wysyła plik ze świeżymi leadami (dział IT poprawia eksport).",
+      "when": {"kind": "by", "phrase": "do środy", "tense": "future", "anchor": ""},
+      "condition": {"text": "", "phrase": ""},
+      "authority_keys": [],
+      "if_others_ask": "",
+      "keywords": ["plik", "pliku", "świeże leady", "świeżymi leadami", "eksport", "eksporcie", "IT", "środy"],
+      "launch": false,
+      "freeze": false,
+      "watches": "",
+      "max_count": 0,
+      "channel": "",
+      "target": "",
+      "current_value": "",
+      "new_value": "",
+      "success_metric": "",
+      "no_deadline_promised": false,
+      "evidence": [
+        {"speaker": "Kasia", "line": 21, "quote": "Pliku ze świeżymi leadami jeszcze nie mam, dział IT coś grzebie w eksporcie.", "role": "origin"},
+        {"speaker": "Kasia", "line": 21, "quote": "Wyślę do środy.", "role": "final"},
+        {"speaker": "Marek", "line": 23, "quote": "Czekam do środy.", "role": "confirmation"}
+      ],
+      "revised": false,
+      "known": "known_previous_call",
+      "known_basis": "Dostałam twój mail, nie pisz drugiego.",
+      "customer_visible": true,
+      "claims": [
+        {"text": "Kasia nie ma jeszcze pliku, bo dział IT pracuje nad eksportem.", "source": "other", "line": 21, "quote": "Pliku ze świeżymi leadami jeszcze nie mam, dział IT coś grzebie w eksporcie.", "time_phrase": ""},
+        {"text": "Kasia dostała mail przypominający od Marka.", "source": "other", "line": 21, "quote": "Dostałam twój mail, nie pisz drugiego.", "time_phrase": ""}
+      ],
+      "ambiguities": [
+        "Jeśli plik dotrze w środę, start walidacji świeżych leadów nadal nie może wypaść w tygodniu urlopu Kasi (19 do 23); rozmowa nie mówi, czy walidacja ma ruszyć jeszcze w czwartek lub piątek; przyjęto, że warunki startu walidacji z poprzedniego rekordu się nie zmieniają."
+      ],
+      "related": [],
+      "brief_for": [],
+      "previous_id": "2026-10-06/I19",
+      "recap_pl": "Plik ze świeżymi leadami wysyłasz do środy, do tego czasu nie piszę.",
+      "message": {"to": "", "subject_pl": "", "body_pl": ""}
+    },
+    {
+      "local_id": "I03",
+      "type": "constraint",
+      "state": "active",
+      "title": "Nie wysyłać Kasi drugiego maila o pliku ze świeżymi leadami",
+      "owner_party": "rinvo",
+      "owner_person": "",
+      "action": "Nie wysyłać kolejnego przypomnienia o pliku ze świeżymi leadami; czekać na plik do środy.",
+      "when": {"kind": "none", "phrase": "", "tense": "future", "anchor": ""},
+      "condition": {"text": "", "phrase": ""},
+      "authority_keys": [],
+      "if_others_ask": "Jeśli ktoś w Rinvo chce przypomnieć Kasi o pliku, nie wysyłać; Kasia prosiła, żeby nie pisać drugiego maila. Po środzie bez pliku zgłosić sprawę osobie przeglądającej zamiast pisać.",
+      "keywords": ["mail", "maila", "drugiego", "przypomnienie", "plik", "pliku", "świeżymi leadami", "nie pisz"],
+      "launch": false,
+      "freeze": false,
+      "watches": "",
+      "max_count": 0,
+      "channel": "",
+      "target": "",
+      "current_value": "",
+      "new_value": "",
+      "success_metric": "",
+      "no_deadline_promised": false,
+      "evidence": [
+        {"speaker": "Kasia", "line": 21, "quote": "Dostałam twój mail, nie pisz drugiego.", "role": "origin"},
+        {"speaker": "Marek", "line": 23, "quote": "Jasne, nie piszę. Czekam do środy.", "role": "confirmation"}
+      ],
+      "revised": false,
+      "known": "new",
+      "known_basis": "",
+      "customer_visible": false,
+      "claims": [],
+      "ambiguities": [
+        "Nie powiedziano, czy po środzie (jeśli plik nie dotrze) wolno przypomnieć; przyjęto, że zakaz drugiego maila obowiązuje dalej, a decyzję o ewentualnym kontakcie podejmuje osoba przeglądająca."
+      ],
+      "related": ["I02"],
+      "brief_for": [],
+      "previous_id": "",
+      "recap_pl": "",
+      "message": {"to": "", "subject_pl": "", "body_pl": ""}
+    },
+    {
+      "local_id": "I04",
+      "type": "commitment",
+      "state": "open",
+      "title": "Zaproszenie Pawła na spotkanie w czwartek o 10:00",
+      "owner_party": "rinvo",
+      "owner_person": "Marek",
+      "action": "Wysłać Pawłowi zaproszenie na spotkanie w czwartek o 10:00 na adres podany przez Kasię.",
+      "when": {"kind": "on", "phrase": "dzisiaj", "tense": "future", "anchor": ""},
+      "condition": {"text": "Termin potwierdzony przez Pawła i przekazany przez Kasię; warunek z poprzedniego rekordu spełniony.", "phrase": "Paweł potwierdził czwartek o dziesiątej"},
+      "authority_keys": ["meeting_confirmation"],
+      "if_others_ask": "",
+      "keywords": ["zaproszenie", "spotkanie", "Paweł", "Pawła", "czwartek", "dziesiątej", "paweł@autotama.pl"],
+      "launch": false,
+      "freeze": false,
+      "watches": "",
+      "max_count": 1,
+      "channel": "email",
+      "target": "",
+      "current_value": "",
+      "new_value": "",
+      "success_metric": "",
+      "no_deadline_promised": false,
+      "evidence": [
+        {"speaker": "Kasia", "line": 25, "quote": "Paweł potwierdził czwartek o dziesiątej, możesz wysłać zaproszenie na paweł@autotama.pl.", "role": "condition"},
+        {"speaker": "Marek", "line": 27, "quote": "Wyślę dzisiaj.", "role": "final"}
+      ],
+      "revised": false,
+      "known": "known_previous_call",
+      "known_basis": "Paweł potwierdził czwartek o dziesiątej",
+      "customer_visible": true,
+      "claims": [
+        {"text": "Paweł potwierdził spotkanie w czwartek o 10:00.", "source": "calendar", "line": 25, "quote": "Paweł potwierdził czwartek o dziesiątej", "time_phrase": "czwartek o dziesiątej"}
+      ],
+      "ambiguities": [
+        "Adres paweł@autotama.pl zawiera polską literę „ł”, co może być błędem zapisu (np. pawel@autotama.pl); przyjęto adres jak podano, osoba przeglądająca powinna go sprawdzić przed wysyłką.",
+        "Nie podano formy spotkania (online czy na miejscu); szkic nie podaje miejsca."
+      ],
+      "related": [],
+      "brief_for": [],
+      "previous_id": "2026-10-06/I42",
+      "recap_pl": "Zaproszenie na spotkanie z Pawłem w czwartek o 10:00 wysyłam dziś na podany adres.",
+      "message": {
+        "to": "Paweł",
+        "subject_pl": "Zaproszenie na spotkanie z Rinvo, czwartek 10:00",
+        "body_pl": "Dzień dobry,\n\nprzesyłam zaproszenie na nasze spotkanie w czwartek o 10:00, termin potwierdzony przez Kasię. Porozmawiamy o tym, jak idzie współpraca i co planujemy dalej.\n\nDo zobaczenia,\nMarek Rewoliński\nRinvo"
+      }
+    },
+    {
+      "local_id": "I05",
+      "type": "config_change",
+      "state": "deferred",
+      "title": "Agent po godzinach dalej wstrzymany, mimo wiadomości Oli o listopadzie",
+      "owner_party": "rinvo",
+      "owner_person": "Marek",
+      "action": "Nie uruchamiać agenta po godzinach; wrócić do tematu tylko, gdy Kasia sama powie, że ruszamy.",
+      "when": {"kind": "none", "phrase": "", "tense": "future", "anchor": ""},
+      "condition": {
+        "text": "Wrócić tylko na słowo Kasi; wiadomość Oli o starcie od listopada nie jest zgodą; przysłanie numerów assistance to nie zielone światło.",
+        "phrase": "czekam na ciebie"
+      },
+      "authority_keys": ["after_hours"],
+      "if_others_ask": "Jeśli Ola lub ktokolwiek inny niż Kasia mówi, że po godzinach ruszamy (np. od listopada), nie uruchamiać i nie odpisywać Oli bezpośrednio; przekazać sprawę Kasi i czekać na jej decyzję.",
+      "keywords": ["po godzinach", "agent po godzinach", "ruszamy", "nie ruszamy", "listopada", "listopad", "Ola", "assistance"],
+      "launch": true,
+      "freeze": false,
+      "watches": "",
+      "max_count": 0,
+      "channel": "",
+      "target": "Agent po godzinach",
+      "current_value": "brak agenta po godzinach",
+      "new_value": "",
+      "success_metric": "",
+      "no_deadline_promised": false,
+      "evidence": [
+        {"speaker": "Kasia", "line": 29, "quote": "Ola pisała do ciebie, że po godzinach ruszamy od listopada?", "role": "origin"},
+        {"speaker": "Marek", "line": 31, "quote": "Odpisałem, że czekam na ciebie.", "role": "condition"},
+        {"speaker": "Kasia", "line": 33, "quote": "Dobrze. Nie ruszamy.", "role": "final"}
+      ],
+      "revised": false,
+      "known": "known_previous_call",
+      "known_basis": "Odpisałem, że czekam na ciebie.",
+      "customer_visible": true,
+      "claims": [
+        {"text": "Ola napisała do Marka, że agent po godzinach rusza od listopada.", "source": "other", "line": 29, "quote": "Ola pisała do ciebie, że po godzinach ruszamy od listopada?", "time_phrase": "od listopada"}
+      ],
+      "ambiguities": [
+        "„Nie ruszamy” nie podaje, na jak długo; przyjęto brak terminu (także nie od listopada) i powrót wyłącznie na słowo Kasi."
+      ],
+      "related": ["I06"],
+      "brief_for": [],
+      "previous_id": "2026-10-06/I32",
+      "recap_pl": "Agent po godzinach nie rusza, wracamy do tematu dopiero, jak sama powiesz.",
+      "message": {"to": "", "subject_pl": "", "body_pl": ""}
+    },
+    {
+      "local_id": "I06",
+      "type": "constraint",
+      "state": "active",
+      "title": "Nie wierzyć przekazom z drugiej ręki o starcie po godzinach",
+      "owner_party": "rinvo",
+      "owner_person": "",
+      "action": "Każdą informację o starcie agenta po godzinach spoza Kasi traktować jako niezatwierdzoną i czekać na Kasię.",
+      "when": {"kind": "none", "phrase": "", "tense": "future", "anchor": ""},
+      "condition": {"text": "", "phrase": ""},
+      "authority_keys": ["after_hours"],
+      "if_others_ask": "Jeśli ktoś inny niż Kasia (np. Ola) twierdzi, że start po godzinach jest ustalony, nie uruchamiać; potwierdzić u Kasi, bez pisania bezpośrednio do Oli.",
+      "keywords": ["po godzinach", "ruszamy", "listopada", "Ola", "pisała", "czekam na ciebie"],
+      "launch": false,
+      "freeze": false,
+      "watches": "",
+      "max_count": 0,
+      "channel": "",
+      "target": "",
+      "current_value": "",
+      "new_value": "",
+      "success_metric": "",
+      "no_deadline_promised": false,
+      "evidence": [
+        {"speaker": "Kasia", "line": 29, "quote": "Ola pisała do ciebie, że po godzinach ruszamy od listopada?", "role": "origin"},
+        {"speaker": "Marek", "line": 31, "quote": "Odpisałem, że czekam na ciebie.", "role": "confirmation"},
+        {"speaker": "Kasia", "line": 33, "quote": "Dobrze. Nie ruszamy.", "role": "confirmation"}
+      ],
+      "revised": false,
+      "known": "known_previous_call",
+      "known_basis": "Odpisałem, że czekam na ciebie.",
+      "customer_visible": false,
+      "claims": [],
+      "ambiguities": [],
+      "related": ["I05"],
+      "brief_for": [],
+      "previous_id": "2026-10-06/I35",
+      "recap_pl": "",
+      "message": {"to": "", "subject_pl": "", "body_pl": ""}
+    },
+    {
+      "local_id": "I07",
+      "type": "config_change",
+      "state": "deferred",
+      "title": "Włączenie Opla dalej wstrzymane",
+      "owner_party": "rinvo",
+      "owner_person": "Marek",
+      "action": "Nie podpinać Opla w agencie; wrócić dopiero po wynikach i na decyzję Kasi.",
+      "when": {"kind": "none", "phrase": "", "tense": "future", "anchor": ""},
+      "condition": {
+        "text": "Po wynikach na leadach z ostatniego miesiąca i tylko na decyzję Kasi (nie Pawła); nie w tygodniu urlopu Kasi (19 do 23).",
+        "phrase": "Opel stoi. Na razie."
+      },
+      "authority_keys": ["brands"],
+      "if_others_ask": "Jeśli ktoś inny niż Kasia (w tym Paweł) prosi o włączenie Opla, nie włączać; czekać na decyzję Kasi.",
+      "keywords": ["Opel", "Opla", "Oplem", "Oplu", "marka", "stoi"],
+      "launch": true,
+      "freeze": false,
+      "watches": "",
+      "max_count": 0,
+      "channel": "",
+      "target": "Marki w agencie",
+      "current_value": "Peugeot i Citroën; Opel niepodpięty",
+      "new_value": "",
+      "success_metric": "",
+      "no_deadline_promised": false,
+      "evidence": [
+        {"speaker": "Kasia", "line": 33, "quote": "A Opel dalej stoi.", "role": "final"},
+        {"speaker": "Marek", "line": 35, "quote": "Opel stoi. Na razie.", "role": "confirmation"}
+      ],
+      "revised": false,
+      "known": "known_previous_call",
+      "known_basis": "A Opel dalej stoi.",
+      "customer_visible": true,
+      "claims": [],
+      "ambiguities": [
+        "„Na razie” nie podaje nowego warunku powrotu; przyjęto warunek z poprzedniego rekordu bez zmian."
+      ],
+      "related": [],
+      "brief_for": [],
+      "previous_id": "2026-10-06/I17",
+      "recap_pl": "Opel dalej stoi.",
+      "message": {"to": "", "subject_pl": "", "body_pl": ""}
+    }
+  ],
+  "previous_updates": [
+    {
+      "previous_id": "2026-10-06/I01",
+      "new_state": "open",
+      "note": "Obie wersje dotarły; Kasia zatwierdziła start od czwartku z podziałem na miasta (Toruń jedna wersja, Włocławek druga), nie na dni.",
+      "evidence": [
+        {"speaker": "Marek", "line": 15, "quote": "Teksty wstępu przyszły w czwartek, dzięki.", "role": "condition"},
+        {"speaker": "Kasia", "line": 17, "quote": "Wstęp puśćcie od czwartku, na dwa miasta, nie na dwa dni.", "role": "final"},
+        {"speaker": "Marek", "line": 19, "quote": "Dobra, od czwartku, Toruń jedna wersja, Włocławek druga.", "role": "confirmation"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I02",
+      "new_state": "closed",
+      "note": "Kasia przysłała obie wersje tekstu wstępu w czwartek.",
+      "evidence": [
+        {"speaker": "Marek", "line": 15, "quote": "Teksty wstępu przyszły w czwartek, dzięki.", "role": "final"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I03",
+      "new_state": "closed",
+      "note": "Przypomnienie niepotrzebne: teksty dotarły w terminie (w czwartek).",
+      "evidence": [
+        {"speaker": "Marek", "line": 15, "quote": "Teksty wstępu przyszły w czwartek, dzięki.", "role": "final"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I06",
+      "new_state": "closed",
+      "note": "Adres we Włocławku poprawiony w bazie wiedzy; Kasia sprawdziła, agent mówi dobrze.",
+      "evidence": [
+        {"speaker": "Marek", "line": 15, "quote": "Adres i godziny poprawione, pisałem ci.", "role": "final"},
+        {"speaker": "Kasia", "line": 17, "quote": "Tak, sprawdziłam, mówi dobrze.", "role": "confirmation"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I07",
+      "new_state": "closed",
+      "note": "Marek poinformował Kasię o poprawce adresu.",
+      "evidence": [
+        {"speaker": "Marek", "line": 15, "quote": "Adres i godziny poprawione, pisałem ci.", "role": "final"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I08",
+      "new_state": "closed",
+      "note": "Sobotnie godziny poprawione w bazie wiedzy; Kasia sprawdziła.",
+      "evidence": [
+        {"speaker": "Marek", "line": 15, "quote": "Adres i godziny poprawione, pisałem ci.", "role": "final"},
+        {"speaker": "Kasia", "line": 17, "quote": "Tak, sprawdziłam, mówi dobrze.", "role": "confirmation"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I19",
+      "new_state": "open",
+      "note": "Pliku jeszcze nie ma (dział IT poprawia eksport); nowy termin Kasi: do środy.",
+      "evidence": [
+        {"speaker": "Kasia", "line": 21, "quote": "Pliku ze świeżymi leadami jeszcze nie mam, dział IT coś grzebie w eksporcie.", "role": "origin"},
+        {"speaker": "Kasia", "line": 21, "quote": "Wyślę do środy.", "role": "revision"},
+        {"speaker": "Marek", "line": 23, "quote": "Czekam do środy.", "role": "confirmation"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I20",
+      "new_state": "closed",
+      "note": "Jedyny mail przypominający wysłany i odebrany; limit wykorzystany, Kasia prosi, by nie pisać drugiego.",
+      "evidence": [
+        {"speaker": "Kasia", "line": 21, "quote": "Dostałam twój mail, nie pisz drugiego.", "role": "final"},
+        {"speaker": "Marek", "line": 23, "quote": "Jasne, nie piszę.", "role": "confirmation"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I41",
+      "new_state": "closed",
+      "note": "Kasia przekazała Pawłowi propozycję; Paweł potwierdził czwartek o 10:00.",
+      "evidence": [
+        {"speaker": "Kasia", "line": 25, "quote": "Paweł potwierdził czwartek o dziesiątej, możesz wysłać zaproszenie na paweł@autotama.pl.", "role": "final"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I42",
+      "new_state": "open",
+      "note": "Warunek spełniony (termin potwierdzony); Marek wysyła zaproszenie dziś na paweł@autotama.pl.",
+      "evidence": [
+        {"speaker": "Kasia", "line": 25, "quote": "Paweł potwierdził czwartek o dziesiątej, możesz wysłać zaproszenie na paweł@autotama.pl.", "role": "condition"},
+        {"speaker": "Marek", "line": 27, "quote": "Wyślę dzisiaj.", "role": "final"}
+      ]
+    },
+    {
+      "previous_id": "2026-10-06/I32",
+      "new_state": "deferred",
+      "note": "Wiadomość Oli o starcie od listopada to przekaz z drugiej ręki; Kasia potwierdza, że nie ruszamy. Listopad nie jest terminem startu, powrót tylko na słowo Kasi.",
+      "evidence": [
+        {"speaker": "Kasia", "line": 29, "quote": "Ola pisała do ciebie, że po godzinach ruszamy od listopada?", "role": "origin"},
+        {"speaker": "Marek", "line": 31, "quote": "Odpisałem, że czekam na ciebie.", "role": "condition"},
+        {"speaker": "Kasia", "line": 33, "quote": "Dobrze. Nie ruszamy.", "role": "final"}
+      ]
+    }
+  ],
+  "conflicts": [
+    {
+      "previous_id": "2026-10-06/I27",
+      "local_id": "I05",
+      "description": "Obowiązuje zakaz pisania do Oli (wszystko przez Kasię), a Marek odpisał Oli bezpośrednio na jej wiadomość o starcie po godzinach. Treść odpowiedzi była zgodna z ustaleniami (czekamy na Kasię) i Kasia ją przyjęła, ale sam kontakt z Olą łamie zakaz; zakaz nie został w rozmowie uchylony i dalej obowiązuje.",
+      "evidence": [
+        {"speaker": "Kasia", "line": 29, "quote": "Ola pisała do ciebie, że po godzinach ruszamy od listopada?", "role": "origin"},
+        {"speaker": "Marek", "line": 31, "quote": "Odpisałem, że czekam na ciebie.", "role": "origin"},
+        {"speaker": "Kasia", "line": 33, "quote": "Dobrze.", "role": "confirmation"}
+      ]
+    }
+  ]
+}

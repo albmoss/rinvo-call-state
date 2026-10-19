@@ -3,23 +3,50 @@ import json
 import sys
 from pathlib import Path
 
-from . import llm
-from .evaluate import evaluate, to_markdown
-from .pipeline import NeedsExtraction, run
+from . import llm, render, store, views
+from .pipeline import NeedsExtraction, ValidationFailed, run
 
-USAGE = """python -m callstate TRANSCRIPT [options]       process a call
-python -m callstate eval GOLD ITEMS [--out DIR]   score items.json against an annotation"""
+COMMANDS = {"serve", "review", "event", "check", "eval"}
 
 
 def main(argv: list[str]) -> int:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")
-    if argv and argv[0] == "eval":
-        ap = argparse.ArgumentParser(prog="python -m callstate eval")
+        sys.stderr.reconfigure(encoding="utf-8")
+    if not argv or argv[0] not in COMMANDS:
+        ap = argparse.ArgumentParser(prog="python -m callstate", description="Process a call transcript into the client ledger.")
+        ap.add_argument("transcript")
+        ap.add_argument("--db", default="callstate.db")
+        ap.add_argument("--out", default="out")
+        ap.add_argument("--extraction", help="replay a saved model response instead of calling the API")
+        ap.add_argument("--date", help="call date YYYY-MM-DD if the header has none")
+        a = ap.parse_args(argv)
+        try:
+            run(a.transcript, a.db, a.out, a.extraction, a.date)
+        except NeedsExtraction as e:
+            print(f"ANTHROPIC_API_KEY is not set. Set it, or give the prompt at {e} to a model and rerun with --extraction <response.json>.", file=sys.stderr)
+            return 2
+        except (ValidationFailed, llm.LLMError) as e:
+            print(f"failed: {e}", file=sys.stderr)
+            return 1
+        return 0
+    cmd, rest = argv[0], argv[1:]
+    ap = argparse.ArgumentParser(prog=f"python -m callstate {cmd}")
+    ap.add_argument("--db", default="callstate.db")
+    ap.add_argument("--customer", help="customer slug (default: the only one in the database)")
+    ap.add_argument("--day", help="YYYY-MM-DD, Europe/Warsaw (default: today)")
+    if cmd == "serve":
+        ap.add_argument("--port", type=int, default=8765)
+        a = ap.parse_args(rest)
+        from .web import serve
+        serve(a.db, a.port, a.day)
+        return 0
+    if cmd == "eval":
+        from .evaluate import evaluate, to_markdown
         ap.add_argument("gold")
         ap.add_argument("items")
-        ap.add_argument("--out", help="directory for metrics.json and metrics.md (default: next to ITEMS)")
-        a = ap.parse_args(argv[1:])
+        ap.add_argument("--out")
+        a = ap.parse_args(rest)
         m = evaluate(a.gold, a.items)
         out = Path(a.out or Path(a.items).parent)
         out.mkdir(parents=True, exist_ok=True)
@@ -27,25 +54,33 @@ def main(argv: list[str]) -> int:
         md = to_markdown(m)
         (out / "metrics.md").write_text(md, encoding="utf-8")
         print(md.split("## Errors")[0])
-        print(f"written: {out / 'metrics.md'}")
         return 0
-    ap = argparse.ArgumentParser(prog="python -m callstate", usage=USAGE)
-    ap.add_argument("transcript")
-    ap.add_argument("--out", default="out", help="output root (default: out)")
-    ap.add_argument("--extraction", help="use a saved model response instead of calling the API")
-    ap.add_argument("--previous", default="auto", help="previous ledger.json; default: newest earlier call for the same customer under --out")
-    ap.add_argument("--no-previous", action="store_true", help="ignore earlier calls")
-    ap.add_argument("--date", help="call date YYYY-MM-DD if the header has none")
-    a = ap.parse_args(argv)
-    try:
-        run(a.transcript, a.out, a.extraction, None if a.no_previous else a.previous, a.date)
-    except NeedsExtraction as e:
-        print(f"No API key found. Set ANTHROPIC_API_KEY (or OPENAI_API_KEY with CALLSTATE_MODEL),\n"
-              f"or give the prompt at {e} to a model and rerun with --extraction <response.json>.", file=sys.stderr)
-        return 2
-    except llm.LLMError as e:
-        print(f"model call failed: {e}", file=sys.stderr)
+    if cmd == "event":
+        ap.add_argument("item_id")
+        ap.add_argument("kind", choices=["done", "received", "sent", "condition_met", "reopened", "cancelled"])
+        ap.add_argument("--note", default="")
+    if cmd == "check":
+        ap.add_argument("--sender", required=True)
+        ap.add_argument("--text", required=True)
+    a = ap.parse_args(rest)
+    from .web import today_iso
+    db = store.connect(a.db)
+    customer = a.customer or (store.customers(db) or [None])[0]
+    if not customer:
+        print("no calls ingested", file=sys.stderr)
         return 1
+    day = a.day or today_iso()
+    if cmd == "review":
+        print(render.review_md(db, customer, day))
+    elif cmd == "event":
+        store.record_event(db, a.item_id, a.kind, day, note=a.note)
+        print(f"{a.item_id}: {a.kind} on {day}")
+    elif cmd == "check":
+        res = views.check_request(db, customer, a.sender, a.text, day)
+        if not res:
+            print("no hold or constraint matches")
+        for r in res:
+            print(f"{r['item']['id']} {r['item']['title']}\n  {r['verdict']}\n  rule: {r['rule']}")
     return 0
 
 

@@ -1,352 +1,250 @@
-import datetime as dt
-
-from .dates import next_working_day, pl_date, pl_when
+from . import store, views
+from .dates import pl_date, pl_when
 
 OPEN_LIKE = ("open", "conditional")
-HOLD = ("deferred", "pending_approval", "blocked")
 
 
 def _first_line(it: dict) -> int:
-    lines = [e["line"] for e in it["evidence"] if e.get("line")]
-    return min(lines) if lines else 10**6
+    return min((e["line"] for e in it["evidence"]), default=10**6)
 
 
-def _when_text(it: dict) -> str:
+def q(e: dict) -> str:
+    return f"> „{e['quote']}” ({e['speaker']}, line {e['line']}, {e['role']})"
+
+
+def when_txt(it: dict) -> str:
     w = it.get("when")
-    if not w or not (w.get("start") or w.get("end")):
+    if not w:
         return ""
-    span = w["start"] if w["start"] == w["end"] else " .. ".join(x or "?" for x in (w.get("start"), w.get("end")))
     if w["kind"] == "by":
-        span = f"by {w['end']}"
+        d = f"by {w['end']}"
     elif w["kind"] == "not_before":
-        span = f"not before {w['start']}"
-    tm = f" {w['time']}" if w.get("time") else ""
-    return f"{span}{tm} (\"{w['phrase']}\", {w['resolution']}: {w.get('basis') or 'n/a'})"
+        d = f"not before {w['start']}"
+    elif w.get("start") and w.get("end") and w["start"] != w["end"]:
+        d = f"{w['start']}..{w['end']}"
+    else:
+        d = w.get("start") or w.get("end") or "unresolved"
+    return f"{d}{' ' + w['time'] if w.get('time') else ''} (\"{w['phrase']}\", {w['resolution']})"
 
 
-def _quote(e: dict) -> str:
-    mark = {"verified": "verified", "verified_normalized": "verified (normalized)", "repaired": "repaired to verbatim",
-            "speaker_mismatch": "verified, speaker corrected", "not_found": "NOT FOUND"}[e["verification"]]
-    return f"> „{e['quote']}” ({e['speaker']}, line {e.get('line', '?')}, {e['role']}, {mark})"
-
-
-def _who(it: dict) -> str:
-    o = it["owner"]
-    return f"{o.get('person') or '-'} ({o.get('party')})"
-
-
-def report(call: dict, items: list[dict], carried: list[dict]) -> str:
-    out = [f"# Call items: {call['customer']}, {call['date']}", "",
-           f"Transcript: `{call['transcript']}`. {len(items)} items from this call"
-           + (f", {len(carried)} carried from {call['previous']}" if carried else "") + ".", ""]
-    for it in sorted(items, key=_first_line):
-        out.append(f"## {it['id']} · {it['type']} · {it['state']} · {it['title']}")
-        out.append("")
-        rows = [("Owner", _who(it)), ("Action", it.get("action") or ""), ("When", _when_text(it))]
-        if it.get("condition"):
-            rows.append(("Condition", f"{it['condition'].get('text')} (\"{it['condition'].get('phrase')}\")"))
-        if it.get("approvers"):
-            rows.append(("Approvers", ", ".join(it["approvers"])))
-        if it.get("limit") and it["limit"].get("max_count"):
-            rows.append(("Limit", f"max {it['limit']['max_count']}" + (f" via {it['limit']['channel']}" if it["limit"].get("channel") else "")))
-        if it.get("value"):
-            rows.append(("Value", f"{it['value'].get('current') or '?'} → {it['value'].get('requested') or '?'}"))
-        k = it.get("known") or {}
-        rows.append(("Known", k.get("status", "new") + (f": {k['basis']}" if k.get("basis") else "")))
-        rows.append(("Revised", "yes, final state shown; superseded quotes kept below" if it.get("revised") else "no"))
-        for label, val in rows:
-            if val:
-                out.append(f"- **{label}:** {val}")
-        out.append("")
-        out.extend(_quote(e) for e in it["evidence"])
-        out.append("")
-        if it.get("claims"):
-            out.append("Claims:")
-            out.extend(f"- {c['text']} [{c['source']}: {c['check']}, {c['detail']}]" for c in it["claims"])
-            out.append("")
-        if it.get("ambiguities"):
-            out.append("Ambiguities:")
-            out.extend(f"- {a}" for a in it["ambiguities"])
-            out.append("")
-        issues = [i for i in it.get("issues", []) if i["severity"] != "info"]
-        if issues:
-            out.append("Checks:")
-            out.extend(f"- {i['severity']}: {i['message']}" for i in issues)
-            out.append("")
-    if carried:
-        out.append(f"## Carried from {call['previous']}")
-        out.append("")
-        out.extend(f"- {c['id']} [{c['type']}/{c['state']}] {c['title']}" for c in carried)
-        out.append("")
-    return "\n".join(out)
-
-
-def recap_email(call: dict, items: list[dict]) -> str:
-    informal = call.get("informal", True)
-    visible = [i for i in sorted(items, key=_first_line) if i.get("customer_visible") and not i.get("quarantined") and i.get("recap_pl")]
-
-    def line(it: dict) -> str:
-        w = it.get("when")
-        date = pl_when(w) if w and w.get("kind") != "past" and w.get("resolution") in ("rule", "model") else ""
-        txt = it["recap_pl"].strip()
-        return f"- {txt}" + (f" ({date})" if date and date not in txt else "")
-
-    ours = [i for i in visible if i["owner"]["party"] == "rinvo" and i["state"] in OPEN_LIKE and i["type"] in ("bug", "config_change", "commitment", "billing")]
-    yours = [i for i in visible if i["owner"]["party"] == "customer" and i["state"] in OPEN_LIKE and i["type"] == "commitment"]
-    hold = [i for i in visible if i["state"] in HOLD and i["type"] != "constraint"]
-    product = [i for i in visible if i["type"] == "feature_request" and i["state"] in OPEN_LIKE]
-    rules = [i for i in visible if i["type"] == "constraint" and i["state"] == "active"]
-    contact = call.get("customer_contact") or {}
-    rinvo = call.get("rinvo_contact") or {}
-    greet = f"Cześć {contact.get('vocative_pl') or contact.get('name') or ''}," if informal else "Dzień dobry,"
-    out = ["<!-- DRAFT. Not sent. A person must review and send it. -->", "",
-           f"**Do:** {contact.get('email') or '(brak adresu w transkrypcji)'}  ",
-           f"**Temat:** Podsumowanie rozmowy z {pl_date(call['date'])}", "", greet, "",
-           f"poniżej ustalenia z naszej rozmowy z {pl_date(call['date'])}.", ""]
-    sections = [("Po naszej stronie", ours),
-                ("Po Twojej stronie" if informal else "Po Państwa stronie", yours),
-                ("Wstrzymane do decyzji", hold),
-                ("Zapisane jako propozycje rozwoju produktu (bez terminu)", product),
-                ("Zasady, których się trzymamy", rules)]
-    for title, group in sections:
-        if group:
-            out.append(f"**{title}**")
-            out.append("")
-            out.extend(line(i) for i in group)
-            out.append("")
-    out.append("Jeśli coś się nie zgadza, daj znać." if informal else "Jeśli coś się nie zgadza, proszę o informację.")
+def item_block(it: dict, extra: list[str] | None = None) -> list[str]:
+    out = [f"### {it['id']} · {it['title']}", "",
+           f"- {it['type']} · {it['state']} · owner {it['owner'].get('person') or it['owner']['party']} · assignee {it['assignee'] or '-'}"]
+    if it.get("action"):
+        out.append(f"- {it['action']}")
+    if it.get("when"):
+        out.append(f"- When: {when_txt(it)}")
+    if it.get("condition"):
+        out.append(f"- Condition: {it['condition']['text']}")
+    if it.get("approvers"):
+        out.append(f"- Waiting for sign-off from: {', '.join(it['approvers'])}")
+    if it.get("authority_keys"):
+        out.append(f"- Decision area: {', '.join(it['authority_keys'])}")
+    if it.get("if_others_ask"):
+        out.append(f"- If someone else asks: {it['if_others_ask']}")
+    out += extra or []
     out.append("")
-    out.append("Pozdrawiam,")
-    out.append(rinvo.get("name") or "")
-    return "\n".join(out)
-
-
-def reminders(call: dict, items: list[dict], constraints: list[dict]) -> list[dict]:
-    out = []
-    for it in sorted(items, key=_first_line):
-        if it["type"] != "follow_up" or it["state"] not in OPEN_LIKE or it.get("quarantined"):
-            continue
-        w = it.get("when") or {}
-        deadline = w.get("end") or w.get("start")
-        send = next_working_day(dt.date.fromisoformat(deadline)).isoformat() + "T09:00" if deadline else None
-        watch = [r for r in it.get("related") or []]
-        conflicts = [i["message"] for i in it.get("issues", []) if i["code"] == "inside_constraint_window"]
-        out.append({
-            "id": f"REM-{it['id']}", "item": it["id"], "status": "proposed, not scheduled",
-            "to": (call.get("customer_contact") or {}).get("email"),
-            "watches_deadline": deadline, "proposed_send_at": send,
-            "trigger": (it.get("condition") or {}).get("text"),
-            "pre_send_check": "Confirm the awaited item has not arrived (inbox, shared drive). If it arrived, cancel.",
-            "max_count": (it.get("limit") or {}).get("max_count"), "channel": (it.get("limit") or {}).get("channel"),
-            "draft_pl": it.get("draft_pl"), "related_items": watch, "constraint_conflicts": conflicts,
-            "evidence": [{"speaker": e["speaker"], "line": e["line"], "quote": e["quote"]} for e in it["evidence"] if e["verification"] != "not_found"],
-        })
+    out += [q(e) for e in it["evidence"]]
+    out.append("")
     return out
 
 
-def reminders_md(rems: list[dict]) -> str:
-    out = ["# Reminder drafts", "", "Nothing here is scheduled. Each reminder needs approval, and the pre-send check must pass on the day.", ""]
-    for r in rems:
-        out += [f"## {r['id']}", "",
-                f"- Proposed send: {r['proposed_send_at']} (deadline watched: {r['watches_deadline']})",
-                f"- Trigger: {r['trigger']}",
-                f"- Maximum sends: {r['max_count'] if r['max_count'] else 'NOT SET, do not schedule'}" + (f", channel {r['channel']}" if r['channel'] else ""),
-                f"- Pre-send check: {r['pre_send_check']}"]
-        if r["constraint_conflicts"]:
-            out.append("- Constraint warnings: " + "; ".join(r["constraint_conflicts"]))
-        out += ["", "Draft (PL):", "", "> " + (r["draft_pl"] or "(no draft)").replace("\n", "\n> "), ""]
-        out += [f"Source: „{e['quote']}” ({e['speaker']}, line {e['line']})" for e in r["evidence"]]
-        out += ["", "- [ ] approve   - [ ] reject", ""]
-    return "\n".join(out)
+def recap_email(db, customer: str) -> str:
+    call = store.calls(db, customer)[-1]
+    meta = call["meta"]
+    items = [i for i in store.items(db, customer) if i["call"] == call["date"] and not i.get("quarantined")
+             and i.get("customer_visible") and i.get("recap_pl")]
+    items.sort(key=_first_line)
 
+    def line(it):
+        w = it.get("when")
+        d = pl_when(w) if w and w["kind"] != "past" and w["resolution"] in ("rule", "anchor") else ""
+        txt = it["recap_pl"].strip()
+        days = [x for x in ((w or {}).get("start"), (w or {}).get("end")) if x]
+        already = days and all(str(int(x[-2:])) in txt for x in days) and pl_date(days[0]).split()[1] in txt
+        return f"- {txt}" + (f" ({d})" if d and not already else "")
 
-def change_requests(items: list[dict]) -> list[dict]:
-    out = []
-    for it in sorted(items, key=_first_line):
-        if it["type"] != "config_change" or it.get("quarantined"):
-            continue
-        cust = [e for e in it["evidence"] if e["verification"] != "not_found"]
-        if it["state"] == "open":
-            status = "ready for review: execute after approval"
-        elif it["state"] == "conditional":
-            status = "hold: execute only when the condition holds, after approval"
-        else:
-            status = f"do not execute ({it['state']})"
-        out.append({
-            "id": f"CR-{it['id']}", "item": it["id"], "title": it["title"], "status": status, "state": it["state"],
-            "current": (it.get("value") or {}).get("current"), "requested": (it.get("value") or {}).get("requested"),
-            "action": it.get("action"), "due": it.get("when"), "condition": it.get("condition"),
-            "approvers": ["Rinvo reviewer"] + it.get("approvers", []),
-            "data_checks": it.get("claims", []),
-            "warnings": [i["message"] for i in it.get("issues", []) if i["severity"] in ("warn", "error")],
-            "evidence": [{"speaker": e["speaker"], "line": e["line"], "role": e["role"], "quote": e["quote"]} for e in cust],
-        })
-    return out
-
-
-def change_requests_md(crs: list[dict]) -> str:
-    out = ["# Configuration change requests", "",
-           "Drafts only. The system has no write access to agent configuration. A person executes an approved request and records who approved it.", ""]
-    for c in crs:
-        out += [f"## {c['id']} · {c['title']}", "", f"- Status: **{c['status']}**",
-                f"- Change: {c['current'] or '?'} → {c['requested'] or '?'}", f"- Action: {c['action']}"]
-        if c["due"] and (c["due"].get("start") or c["due"].get("end")):
-            out.append(f"- Due: {c['due'].get('kind')} {c['due'].get('start') or ''} {c['due'].get('end') or ''} (\"{c['due'].get('phrase')}\")")
-        if c["condition"]:
-            out.append(f"- Condition: {c['condition'].get('text')}")
-        out.append(f"- Approvals needed: {', '.join(c['approvers'])}")
-        for d in c["data_checks"]:
-            out.append(f"- Data check: {d['text']} [{d['check']}: {d['detail']}]")
-        for w in c["warnings"]:
-            out.append(f"- Warning: {w}")
-        out.append("")
-        out += [f"> „{e['quote']}” ({e['speaker']}, line {e['line']}, {e['role']})" for e in c["evidence"]]
-        out += ["", "- [ ] approve   - [ ] reject", ""]
-    return "\n".join(out)
-
-
-def tickets(items: list[dict]) -> list[dict]:
-    queue = {"bug": "engineering", "feature_request": "product backlog", "billing": "finance", "commitment": "account tasks"}
-    out = []
-    for it in sorted(items, key=_first_line):
-        if it["type"] not in queue or it.get("quarantined") or it["state"] in ("closed", "rejected"):
-            continue
-        if it["type"] == "commitment" and it["owner"]["party"] != "rinvo":
-            continue
-        out.append({"id": f"TKT-{it['id']}", "item": it["id"], "queue": queue[it["type"]], "title": it["title"],
-                    "state": it["state"], "assignee": it["owner"].get("person"), "action": it.get("action"),
-                    "due": it.get("when"), "condition": it.get("condition"), "known": it.get("known"),
-                    "claims_to_verify": [c for c in it.get("claims", []) if c["check"] == "not_checked"],
-                    "evidence": [{"speaker": e["speaker"], "line": e["line"], "quote": e["quote"]} for e in it["evidence"] if e["verification"] != "not_found"]})
-    return out
-
-
-def tickets_md(tks: list[dict]) -> str:
-    out = ["# Tickets and tasks (drafts)", ""]
-    for q in ("engineering", "finance", "account tasks", "product backlog"):
-        group = [t for t in tks if t["queue"] == q]
-        if not group:
-            continue
-        out += [f"## {q.capitalize()}", ""]
-        for t in group:
-            due = t["due"] or {}
-            when = f", due {due.get('end') or due.get('start')}" if (due.get("end") or due.get("start")) else ""
-            out.append(f"### {t['id']} · {t['title']}")
-            out.append("")
-            out.append(f"- {t['state']}, assignee {t['assignee'] or '-'}{when}; known: {(t['known'] or {}).get('status', 'new')}")
-            out.append(f"- {t['action']}")
-            if t["condition"]:
-                out.append(f"- Condition: {t['condition'].get('text')}")
-            for c in t["claims_to_verify"]:
-                out.append(f"- Verify: {c['text']} ({c['source']})")
-            out += [f"> „{e['quote']}” ({e['speaker']}, line {e['line']})" for e in t["evidence"]]
-            out.append("")
-    return "\n".join(out)
-
-
-def alerts(call: dict, items: list[dict], notes: list[dict]) -> list[dict]:
-    out = []
-    for it in sorted(items, key=_first_line):
-        if it["type"] == "account_signal":
-            out.append({"kind": "account_signal", "item": it["id"], "title": it["title"], "detail": it.get("action"),
-                        "evidence": [f"„{e['quote']}” ({e['speaker']}, line {e['line']})" for e in it["evidence"] if e["verification"] != "not_found"]})
-        for i in it.get("issues", []):
-            if i["code"] in ("absent_owner", "quote_not_found", "unverified", "date_conflict", "final_is_superseded",
-                             "revision_order", "claim_mismatch", "inside_constraint_window", "possible_duplicate", "missing_condition",
-                             "missing_approver", "missing_limit", "unknown_person"):
-                out.append({"kind": i["code"], "item": it["id"], "title": it["title"], "detail": i["message"]})
-        for a in it.get("ambiguities") or []:
-            out.append({"kind": "ambiguity", "item": it["id"], "title": it["title"], "detail": a})
-    return out
-
-
-def alerts_md(al: list[dict]) -> str:
-    out = ["# Internal alerts", "", "Internal only. Never forwarded to the customer.", ""]
-    order = ["account_signal", "absent_owner", "ambiguity", "date_conflict", "claim_mismatch", "inside_constraint_window",
-             "final_is_superseded", "revision_order", "possible_duplicate", "quote_not_found", "unverified",
-             "missing_condition", "missing_approver", "missing_limit", "unknown_person"]
-    for kind in order:
-        group = [a for a in al if a["kind"] == kind]
-        if not group:
-            continue
-        out += [f"## {kind.replace('_', ' ')}", ""]
-        for a in group:
-            out.append(f"- **{a['item']}** {a['title']}: {a['detail']}")
-            for e in a.get("evidence", []):
-                out.append(f"  > {e}")
-        out.append("")
-    return "\n".join(out)
-
-
-def constraints_md(call: dict, items: list[dict], carried: list[dict]) -> str:
-    out = [f"# Constraint registry: {call['customer']}", "",
-           "Every future change request, reminder, and draft is checked against this list. Carried into the next call until the window ends or the named approver lifts it.", ""]
-    rows = [i for i in items if i["type"] == "constraint" and i["state"] == "active" and not i.get("quarantined")]
-    rows += [c for c in carried if c["type"] == "constraint" and c["state"] == "active"]
-    for c in sorted(rows, key=lambda x: x["id"]):
-        w = c.get("when") or {}
-        span = f" Valid {w.get('start') or ''}..{w.get('end') or ''}." if (w.get("start") or w.get("end")) else " No end date."
-        lift = f" Only {', '.join(c['approvers'])} can lift it." if c.get("approvers") else ""
-        src = c.get("source_call", call["date"])
-        ev = next((e for e in c["evidence"] if e["role"] == "final"), c["evidence"][-1] if c["evidence"] else None)
-        cite = f" „{ev['quote']}” ({ev['speaker']}, line {ev['line']}, call {src})" if ev else ""
-        out.append(f"- **{c['id']}** {c['title']}. {c.get('action') or ''}{span}{lift}{cite}")
+    groups = [
+        ("Po naszej stronie", [i for i in items if i["owner"]["party"] == "rinvo" and i["state"] in OPEN_LIKE and i["type"] in views.RINVO_WORK]),
+        ("Po Twojej stronie", [i for i in items if i["owner"]["party"] == "customer" and i["state"] in OPEN_LIKE and i["type"] == "commitment"]),
+        ("Wstrzymane albo czekające na decyzję", [i for i in items if i["state"] in views.HOLDS and i["type"] != "constraint"]),
+        ("Zapisane jako propozycje rozwoju produktu, bez obiecanego terminu", [i for i in items if i["type"] == "feature_request" and i["state"] in OPEN_LIKE]),
+        ("Zasady, których się trzymamy", [i for i in items if i["type"] == "constraint" and i["state"] == "active"]),
+    ]
+    contact = next((p for p in store.account(db, customer)["people"] if p["name"].split()[0] == (meta.get("customer_contact") or "").split()[0]), {})
+    out = ["<!-- Draft. Not sent. -->", "", f"**Do:** {contact.get('email') or meta.get('customer_contact')}  ",
+           f"**Temat:** Podsumowanie rozmowy z {pl_date(call['date'])}", "",
+           f"Cześć {meta.get('customer_contact_vocative_pl') or meta.get('customer_contact')},", "",
+           f"poniżej ustalenia z naszej rozmowy z {pl_date(call['date'])}.", ""]
+    for title, group in groups:
+        if group:
+            out += [f"**{title}**", ""] + [line(i) for i in group] + [""]
+    out += ["Jeśli coś się nie zgadza, daj znać.", "", "Pozdrawiam,", meta.get("rinvo_contact") or ""]
     return "\n".join(out) + "\n"
 
 
-def next_call_brief(call: dict, items: list[dict], carried: list[dict]) -> str:
-    allit = [i for i in items if not i.get("quarantined")] + carried
-    out = [f"# Next call brief: {call['customer']}", "", f"Built from the call on {call['date']}.", ""]
-
-    def due(i):
-        w = i.get("when") or {}
-        return w.get("end") or w.get("start") or "9999"
-
-    groups = [
-        ("Rinvo owes", [i for i in allit if i["owner"]["party"] == "rinvo" and i["state"] in OPEN_LIKE and i["type"] in ("bug", "config_change", "commitment", "billing")]),
-        ("Waiting on the customer", [i for i in allit if i["owner"]["party"] == "customer" and i["state"] in OPEN_LIKE]),
-        ("Pending approval", [i for i in allit if i["state"] == "pending_approval"]),
-        ("Deferred: ask only if the reopen condition holds", [i for i in allit if i["state"] == "deferred"]),
-        ("Blocked on input", [i for i in allit if i["state"] == "blocked"]),
-    ]
-    for title, group in groups:
-        if not group:
+def messages_md(db, customer: str, day: str) -> str:
+    out = [f"# Message drafts (as of {day})", "", "Polish drafts. Nothing is sent by the system.", ""]
+    for d in views.drafts(db, customer, day):
+        if d["kind"] != "message":
             continue
-        out += [f"## {title}", ""]
-        for i in sorted(group, key=due):
-            w = i.get("when") or {}
-            d = w.get("end") or w.get("start")
-            cond = f" Condition: {i['condition']['text']}" if i.get("condition") else ""
-            who = i["owner"].get("person") or i["owner"]["party"]
-            appr = f" Approver: {', '.join(i['approvers'])}." if i.get("approvers") and i["state"] in HOLD else ""
-            out.append(f"- {i['id']} {i['title']} ({who}{', ' + d if d else ''}).{cond}{appr}")
-        out.append("")
-    cons = [i for i in allit if i["type"] == "constraint" and i["state"] == "active"]
-    if cons:
-        out += ["## Constraints in force", ""] + [f"- {c['id']} {c['title']}" for c in cons] + [""]
-    amb = [(i["id"], a) for i in items for a in i.get("ambiguities") or []]
-    if amb:
-        out += ["## Open questions from the last call", ""] + [f"- {i}: {a}" for i, a in amb] + [""]
+        it = d["item"]
+        out += [f"## {it['id']} · {it['title']}", "", f"- To: {d['to']}" + (f" <{d['to_email']}>" if d.get("to_email") else ""),
+                f"- Status: {d['status']}", f"- Subject: {d['subject']}", "", "> " + d["body"].replace("\n", "\n> "), ""]
     return "\n".join(out)
 
 
-def review_md(call: dict, items: list[dict], crs: list, rems: list, tks: list, al: list, stats: dict) -> str:
-    out = [f"# Review checklist: {call['customer']}, {call['date']}", "",
-           "Nothing below has been sent or executed. Approve each line before it leaves the system.", "",
-           "## Verification", "",
-           f"- Quotes: {stats['quotes_total']} cited, {stats['verified']} verified verbatim, {stats['normalized']} verified after normalization, "
-           f"{stats['repaired']} repaired to the verbatim text, {stats['speaker_fixed']} with the speaker corrected, {stats['not_found']} not found.",
-           f"- Items: {stats['items']} extracted, {stats['quarantined']} quarantined (no verifiable quote, excluded from every draft).",
-           f"- Dates: {stats['dates_rule']} resolved by rule, {stats['dates_model']} taken from the model, {stats['dates_conflict']} rule/model conflicts, {stats['dates_unresolved']} unresolved.",
-           f"- Claims: {stats['claims']} made in the call, {stats['claims_checked']} checked against available data, {stats['claims_unchecked']} need data that was not provided.",
-           "", "## Approvals", "",
-           f"- [ ] Recap email (`drafts/recap_email_pl.md`) to {(call.get('customer_contact') or {}).get('email') or 'customer'}",
-           ]
-    out += [f"- [ ] {c['id']} {c['title']} ({c['status']})" for c in crs]
-    out += [f"- [ ] {r['id']} reminder, proposed {r['proposed_send_at']}, max {r['max_count']}" for r in rems]
-    out += [f"- [ ] {t['id']} credit or invoice action: {t['title']}" for t in tks if t["queue"] == "finance"]
-    out += [f"- [ ] Add {i['id']} to the constraint registry: {i['title']}" for i in items if i["type"] == "constraint" and not i.get("quarantined")]
-    errs = [(i["id"], x) for i in items for x in i.get("issues", []) if x["severity"] == "error"]
-    if errs:
-        out += ["", "## Errors to resolve before approving", ""] + [f"- {i}: {x['message']}" for i, x in errs]
+def change_specs(db, customer: str) -> str:
+    items = store.items(db, customer)
+    out = ["# Configuration change specs", "",
+           "For a person to apply by hand. The system has no write access to the agent configuration.", ""]
+    for it in sorted([i for i in items if i["type"] == "config_change" and not i.get("quarantined")], key=_first_line):
+        v = it.get("value") or {}
+        if it["state"] == "open":
+            status = "APPLY after review"
+        elif it["state"] == "conditional":
+            status = "HOLD until the condition holds"
+        else:
+            status = f"DO NOT APPLY ({it['state']})"
+        extra = [f"- Status: **{status}**"]
+        if v:
+            extra += [f"- Setting: {v.get('target') or '-'}", f"- Current: {v.get('current') or '-'}", f"- New: {v.get('requested') or '-'}"]
+        if it.get("launch"):
+            sw = views.start_window(it, items)
+            extra.append(f"- Earliest start: {sw['earliest']}; blocked: " + (", ".join(f"{b['from']}..{b['to']} ({b['by']})" for b in sw["blocked"]) or "none"))
+        out += item_block(it, extra)
+    return "\n".join(out)
+
+
+def dev_tickets(db, customer: str) -> str:
+    out = ["# Dev tickets", ""]
+    for it in sorted([i for i in store.items(db, customer) if i["type"] == "bug" and not i.get("quarantined")], key=_first_line):
+        extra = []
+        for c in it.get("claims", []):
+            extra.append(f"- Reported: {c['text']}" + (f" (date {c['date']})" if c.get("date") else "") + f" [to verify in {c['source']}]")
+        out += item_block(it, extra)
+    return "\n".join(out)
+
+
+def backlog(db, customer: str) -> str:
+    out = ["# Product backlog entries", ""]
+    for it in sorted([i for i in store.items(db, customer) if i["type"] == "feature_request" and not i.get("quarantined")], key=_first_line):
+        extra = [f"- Success metric named by the client: {it.get('success_metric') or 'none named'}",
+                 f"- Deadline promised: {'no' if it.get('no_deadline_promised') else 'YES, check the quote'}",
+                 f"- Known: {it['known']['status']}" + (f" ({it['known']['basis']})" if it['known'].get('basis') else "")]
+        out += item_block(it, extra)
+    return "\n".join(out)
+
+
+def meeting_briefs(db, customer: str) -> dict[str, str]:
+    items = store.items(db, customer)
+    byid = {i["id"]: i for i in items}
+    acc = store.account(db, customer)
+    meetings: dict[str, list] = {}
+    for it in items:
+        for m in it.get("brief_for", []):
+            meetings.setdefault(m, []).append(it)
+    out = {}
+    for mid, agenda in meetings.items():
+        m = byid.get(mid)
+        if not m:
+            continue
+        auth = {a["key"]: a for a in acc["authority"]}
+        attendees = {p for k in m.get("authority_keys", []) for p in auth.get(k, {}).get("approvers", [])} | set(m.get("approvers", []))
+        lines = [f"# Meeting brief: {m['title']}", "", f"When: {when_txt(m)}", f"Precondition: {(m.get('condition') or {}).get('text') or 'none'}", ""]
+        lines += ["## On the agenda", ""]
+        for it in sorted(agenda, key=_first_line):
+            lines += item_block(it)
+        pend = [i for i in views._live(items) if i["state"] == "pending_approval" and i not in agenda and set(i.get("approvers", [])) & attendees]
+        if pend:
+            lines += ["## Decisions waiting for the attendee", ""]
+            for it in pend:
+                lines += item_block(it)
+        nopromise = [i for i in views._live(items) if i["type"] == "feature_request" and i.get("no_deadline_promised")]
+        if nopromise:
+            lines += ["## Do not promise dates for", ""] + [f"- {i['title']}" for i in nopromise] + [""]
+        facts = [f for f in acc["facts"] if f["status"] != "superseded"]
+        lines += ["## Client facts", ""] + [f"- {f['subject']}: {f['value']}" for f in facts] + [""]
+        out[mid] = "\n".join(lines)
+    return out
+
+
+def next_call_brief(db, customer: str, day: str) -> str:
+    c = views.client(db, customer)
+    out = [f"# Pre-call brief: {customer} (state on {day})", ""]
+    sections = [("Rinvo owes", c["rinvo_commitments"]), ("Waiting on the client", c["waiting_on_client"]),
+                ("Holds: do not act, ask only if the reopen condition holds", c["holds"]), ("Constraints in force", c["constraints"]),
+                ("Risks", c["risks"])]
+    for title, group in sections:
+        if not group:
+            continue
+        out += [f"## {title}", ""]
+        for it in sorted(group, key=lambda i: views.due_date(i) or "9999"):
+            d = views.due_date(it)
+            cond = f" Condition: {it['condition']['text']}" if it.get("condition") else ""
+            who = f" Waiting for {', '.join(it['approvers'])}." if it.get("approvers") else ""
+            out.append(f"- {it['id']} {it['title']} ({it['owner'].get('person') or it['owner']['party']}{', ' + d if d else ''}).{cond}{who}")
+        out.append("")
+    amb = [(i["id"], a) for i in store.items(db, customer) for a in i.get("ambiguities", []) if i["state"] in views.LIVE]
+    if amb:
+        out += ["## Open questions", ""] + [f"- {i}: {a}" for i, a in amb] + [""]
+    return "\n".join(out)
+
+
+def review_md(db, customer: str, day: str) -> str:
+    r = views.review(db, customer, day)
+    out = [f"# Daily review: {customer}, {day}", "", "The only human step. Everything else is already filed.", "", "## Drafts ready to send", ""]
+    for d in r["drafts"]:
+        if d["kind"] == "recap":
+            out.append(f"- [ ] Recap email for the call on {d['call']} to {d['to']} (`drafts/recap_email_pl.md`)")
+        else:
+            out.append(f"- [ ] {d['item']['id']} to {d['to']}: {d['subject']}")
+    out += ["", "## Due today, per assignee", ""]
+    for who, entries in r["due"].items():
+        out.append(f"**{who}**")
+        for e in entries:
+            it = e["item"]
+            tail = f" ({e['reminder']['status']}, sent {e['reminder']['sent']} of {e['reminder']['max_count']})" if e["kind"] == "reminder" else ""
+            out.append(f"- [{e['kind']}] {it['id']} {it['title']}{tail}")
+        out.append("")
+    if not r["due"]:
+        out += ["Nothing due.", ""]
+    out += ["## Quarantined", ""]
+    for it in r["quarantined"]:
+        out.append(f"- {it['id']} {it['title']}: " + "; ".join(it["quarantine_reasons"]))
+    for k, v in r["account_quarantine"].items():
+        out.append(f"- {k}: " + "; ".join(v))
+    if not r["quarantined"] and not r["account_quarantine"]:
+        out.append("None.")
+    out += ["", "## Ambiguities", ""] + [f"- {i['id']} {i['title']}: {a}" for i, a in r["ambiguities"]]
+    out += ["", "## Constraint conflicts", ""] + [f"- {i['id']} {i['title']}: {x['message']}" for i, x in r["constraint_conflicts"]]
+    out += [f"- {c['item_id'] or c['previous_id']}: {c['description']}" for c in r["cross_call_conflicts"]]
+    if not r["constraint_conflicts"] and not r["cross_call_conflicts"]:
+        out.append("None.")
+    if r["warnings"]:
+        out += ["", "## Other warnings", ""] + [f"- {i['id']}: {x['message']}" for i, x in r["warnings"]]
+    return "\n".join(out) + "\n"
+
+
+def client_md(db, customer: str) -> str:
+    c = views.client(db, customer)
+    acc = c["account"]
+    out = [f"# Client: {customer}", "", "## People", ""]
+    out += [f"- {p['name']} ({p['side']}, {p['role'] or '-'}, {'on the call' if p['present'] else 'not on the call'}{', ' + p['email'] if p['email'] else ''})" for p in acc["people"]]
+    out += ["", "## Who decides what", ""]
+    for a in acc["authority"]:
+        bar = f"; not: {', '.join(a['not_authorized'])}" if a["not_authorized"] else ""
+        ev = a["evidence"][0] if a["evidence"] else None
+        out.append(f"- **{a['key']}**: {a['decision']}. Decides: {', '.join(a['approvers']) or '-'}{bar}." + (f" „{ev['quote']}” (line {ev['line']})" if ev else ""))
+    out += ["", "## Facts", ""]
+    for f in acc["facts"]:
+        ev = f["evidence"][0] if f["evidence"] else None
+        mark = "" if f["status"] == "current" else f" [{f['status']}{', replaced by #' + str(f['superseded_by']) if f['superseded_by'] else ''}]"
+        out.append(f"- #{f['id']} {f['subject']}: {f['value']}{mark}" + (f" „{ev['quote']}” (line {ev['line']})" if ev else ""))
+    for title, key in [("Rinvo commitments", "rinvo_commitments"), ("Waiting on client", "waiting_on_client"), ("Reminders", "reminders"),
+                       ("Holds", "holds"), ("Product requests", "product"), ("Risks", "risks"), ("Constraints", "constraints")]:
+        if c[key]:
+            out += ["", f"## {title}", ""]
+            for it in sorted(c[key], key=_first_line):
+                out += item_block(it)
     return "\n".join(out) + "\n"

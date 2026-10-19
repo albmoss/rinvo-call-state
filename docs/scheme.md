@@ -41,7 +41,7 @@ Every item has a **type** (what kind of thing it is, which decides where it goes
 | `when` | `{kind, phrase, start, end, time}`. `kind` is `by`, `on`, `not_before`, `range`, `window` or `past`. `phrase` is the verbatim words from the transcript; `start`/`end` are calendar dates resolved from the call date |
 | `condition` | Trigger or reopen condition in words, plus the verbatim phrase it rests on |
 | `limit` | `{max_count, channel}` for anything that contacts the customer |
-| `approvers` | People whose word is required, in order. People not on the call are marked |
+| `authority_keys` | Keys into the account's authority matrix (who decides brands, cost, customer copy, case-study names, after-hours, training dates, invoicing). Approver names are resolved from the matrix, which also lists people who explicitly cannot decide |
 | `value` | For changes: `{current, requested}`. The current value is what the call claims; it is checked against data when data exists |
 | `evidence` | List of `{speaker, quote, line, role}`. `role` is `origin`, `revision`, `final`, `confirmation`, `condition` or `superseded`. Quotes are verbatim and verified against the transcript |
 | `revised` | True when a later statement changed an earlier one. The item holds the final state; the earlier statement stays in `evidence` with role `superseded` |
@@ -56,7 +56,7 @@ Every item has a **type** (what kind of thing it is, which decides where it goes
 - **Conditions and triggers.** `follow_up` items carry the deadline they watch (`when`), the trigger (`condition`), and the count (`limit.max_count`). "If X doesn't arrive by Monday, send one reminder" becomes `when.end = Monday`, `condition = X not received`, `max_count = 1`, `channel = email`.
 - **Deferred or not approved.** State `deferred`, `pending_approval` or `rejected`, always with the reopen condition and who may reopen it. A deferred item never produces a change request or a reminder.
 - **Standing prohibitions.** `constraint` items, with an optional validity window. The registry is carried into the next call and checked against every proposed action.
-- **Approval by someone not on the call.** `approvers` names them; the state is `pending_approval` until they decide. If a person on the call says the absent person cannot approve something, that goes into `approvers` too (the decision waits for the person who said it).
+- **Approval by someone not on the call.** The item points to an authority-matrix entry; the state is `pending_approval` until the approver decides. If a person on the call says someone cannot approve something, that person goes into the entry's `not_authorized` list, and a request from them is flagged instead of acted on.
 - **Revised statements.** One item, final state, `revised = true`, the earlier quote kept with role `superseded` and the later one with role `revision` or `final`. Both are cited.
 
 ## Annotation rules
@@ -83,7 +83,7 @@ The call date anchors every relative expression. For a call on Tuesday 6 October
 | `w tym miesiącu` (as a block) | until the last day of the month, so `not_before` the first day of the next month |
 | `od dziewiętnastego do dwudziestego trzeciego` | day numbers in the call's month, or the next month if already past |
 
-A follow-up that watches a deadline fires on the next working day after it, at 09:00. The date is a proposal in a draft, not a scheduled send.
+A follow-up appears in its owner's Today view on the deadline it watches, with a ready draft, as long as the watched item has not been marked received and the follow-up has not reached its `max_count`. Nothing is scheduled or sent by the system.
 
 ## What we do not automate
 
@@ -94,4 +94,4 @@ A follow-up that watches a deadline fires on the next working day after it, at 0
 - Contacting anyone not on the call (an absent decision-maker, a salesperson the customer asked us not to contact).
 - Resolving ambiguities the call itself leaves open. They are surfaced for a person to decide.
 
-Where a human approves: every change request, every customer-facing draft, every reminder schedule, every credit, every new constraint before it enters the registry, and every item whose quotes failed verification. Internal tickets and alerts can be filed after a single review pass, since a wrong ticket costs little.
+Where a human acts: one daily review (see `docs/process.md`). It holds every draft that would reach the client, every configuration change spec, every money action, quarantined items, ambiguities and constraint conflicts. Tickets, backlog entries, reminders and constraint-registry entries are filed without a click, since a wrong internal entry costs little and the review shows it anyway.

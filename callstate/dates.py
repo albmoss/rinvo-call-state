@@ -294,13 +294,6 @@ def resolve(phrase: str, call: dt.date, kind: str | None = None, tense: str | No
     }
 
 
-def next_working_day(d: dt.date) -> dt.date:
-    d += dt.timedelta(days=1)
-    while d.weekday() >= 5:
-        d += dt.timedelta(days=1)
-    return d
-
-
 def pl_date(iso: str | None) -> str:
     if not iso:
         return ""

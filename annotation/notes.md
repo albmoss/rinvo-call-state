@@ -43,3 +43,13 @@ G21 (Friday not promised, Monday instead) is a correction inside one sentence, s
 - G31: Kasia's trigger is "not both versions", Marek's is "nothing arrives". They differ if exactly one version arrives.
 - G11: the context section says Paweł decides on brands, yet Kasia says Paweł does not approve Opel. The safe reading is that Opel needs Kasia.
 - G33: the correction date is Marek's estimate for Michał, who was not on the call.
+
+## Changes after the first system output
+
+The gold file was first committed on its own, before any system code or output (commit "Add item scheme and hand annotation of the 2026-10-06 call"). Everything below was added on 2026-10-19, after system runs existed. No item was added or removed, and no type, state, owner, date, condition, approver name or quote of an existing item was changed.
+
+- `account` section (people, authority matrix, facts, all with verified quotes). Added because the task brief changed to require it.
+- `authority_keys` on G08, G11, G12 and G18, linking those items to the authority matrix. On G12 the key list was first `cost, customer_copy` and was cut to `cost` so that it resolves to the item's existing approver, Paweł.
+- `alt_types` / `alt_states` for tolerant scoring. G08 `bug`, G11 `constraint`, G13 `feature_request`, G14 `config_change` and G28 state `conditional` were already listed as alternatives in the judgment table above at the first commit; only their machine-readable form is new. Two alternatives are new: G12 `feature_request`, because the task brief listed SMS after two failed attempts under the product backlog, and G18 `config_change`, because the after-hours agent can be read as a change to this client's setup. Both were added after seeing that the system typed G18 as `config_change`, so the tolerant score credits that decision.
+
+Strict scores ignore every alternative.
