@@ -1,5 +1,24 @@
 # Process: from call transcript to the client record
 
+## In short
+
+```mermaid
+flowchart LR
+    A[Call transcript] --> B[Claude reads the call once]
+    B --> C[Code checks every quote<br/>and computes the dates]
+    C --> D[(Client record)]
+    D --> E[Today, Waiting on client,<br/>Client view, briefs]
+    D --> F[Drafts: emails in Polish,<br/>config change specs]
+    E --> G([One daily review by a person])
+    F --> G
+    G --> H[Person sends, applies,<br/>marks received or done]
+    H --> D
+```
+
+The system prepares; a person decides. Nothing reaches the client, the client's configuration or money without that review.
+
+## In detail
+
 ```mermaid
 flowchart TD
     T[Transcript file] --> P[Parse: call date, participants,<br/>absent people, context lines, turns]

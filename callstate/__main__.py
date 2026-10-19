@@ -73,7 +73,12 @@ def main(argv: list[str]) -> int:
     if cmd == "review":
         print(render.review_md(db, customer, day))
     elif cmd == "event":
-        store.record_event(db, a.item_id, a.kind, day, note=a.note)
+        try:
+            store.record_event(db, a.item_id, a.kind, day, note=a.note)
+        except KeyError:
+            ids = [i["id"] for i in store.items(db, customer) if i["id"].endswith("/" + a.item_id)]
+            print(f"unknown item {a.item_id}" + (f"; did you mean {', '.join(ids)}?" if ids else ""), file=sys.stderr)
+            return 1
         print(f"{a.item_id}: {a.kind} on {day}")
     elif cmd == "check":
         res = views.check_request(db, customer, a.sender, a.text, day)

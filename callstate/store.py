@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS conflicts (id INTEGER PRIMARY KEY AUTOINCREMENT, cust
     description TEXT, evidence TEXT);
 """
 
-CLOSING_EVENTS = {"received": "closed", "done": "closed", "condition_met": "open", "reopened": "open", "cancelled": "closed"}
+CLOSING_EVENTS = {"received": "closed", "done": "closed", "condition_met": "open", "reopened": "reopened", "cancelled": "closed"}
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
@@ -85,6 +85,10 @@ def _update_item(db, item_id: str, state: str, extra: dict) -> None:
     if not row:
         return
     data = json.loads(row["data"])
+    if state == "reopened":
+        state = data.pop("state_before_close", "open")
+    elif state == "closed" and data["state"] != "closed":
+        data["state_before_close"] = data["state"]
     data["state"] = state
     data.update(extra)
     db.execute("UPDATE items SET state=?, data=? WHERE id=?", (state, json.dumps(data, ensure_ascii=False), item_id))
@@ -109,6 +113,8 @@ def item(db, item_id: str) -> dict | None:
 
 
 def record_event(db, item_id: str, kind: str, at: str, by: str = "", note: str = "") -> None:
+    if not db.execute("SELECT 1 FROM items WHERE id=?", (item_id,)).fetchone():
+        raise KeyError(item_id)
     with db:
         db.execute("INSERT INTO events (item_id, kind, at, by, note) VALUES (?,?,?,?,?)", (item_id, kind, at, by, note))
         if kind in CLOSING_EVENTS:

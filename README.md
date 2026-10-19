@@ -19,8 +19,8 @@ python -m callstate check --day 2026-10-14 --sender Paweł --text "Paweł prosi,
 ```
 
 1. Ingests the call into `callstate.db` and writes `out/grupa_auto_tama/2026-10-06/`.
-2. Opens the panel at http://127.0.0.1:8765/today as of Thursday 8 October, the day the one-time reminder about the opening texts is due. Tabs: Today, Client, Waiting on client, Drafts, Daily review. The buttons record events (received, sent, done); mark the texts as received and the reminder disappears.
-3. Shows that Paweł cannot approve Opel and that Kasia must be called first. The same check is on the Client tab.
+2. Opens the panel at http://127.0.0.1:8765/today as of Thursday 8 October, the day the one-time reminder about the opening texts is due. The panel is in Polish, like the client. Tabs: Na dziś (today), Czekamy na klienta (waiting on the client), Do wysłania (drafts), Klient (client record and the request check), Przegląd dnia (daily review). Each item has one button for its next step; click "Dostaliśmy" (received) on Kasia's opening texts and the reminder disappears. Closed items can be reopened from the Klient tab.
+3. Shows that Paweł cannot approve Opel and that Kasia must be called first. The same check is at the top of the Klient tab.
 
 Optional: process a second call. `tests/fixtures/synthetic_followup_2026-10-13.md` is a short follow-up call written for this demo (it is not from Rinvo); its saved extraction updates the record from the first call.
 
