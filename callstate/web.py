@@ -1,11 +1,17 @@
 import datetime as dt
 import html
+import itertools
+import os
+import re
+import threading
 import urllib.parse
 from pathlib import Path
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from . import store, views
+from . import llm, store, views
 from .dates import WEEKDAY_PL, pl_date
+from .pipeline import NeedsExtraction, ValidationFailed, run, slug
+from .transcript import fold, load
 
 try:
     from zoneinfo import ZoneInfo
@@ -23,7 +29,8 @@ main{max-width:1000px;margin:0 auto;padding:20px 24px}h1{font-size:22px;margin-b
 blockquote{margin:6px 0;padding-left:10px;border-left:3px solid #ccc;color:#444;font-size:13px}
 pre{white-space:pre-wrap;background:#f4f4f4;padding:10px;border-radius:6px;font:inherit}summary{cursor:pointer;color:#0a58ca;font-size:13px}
 button{cursor:pointer;transition:transform 120ms ease-out}button:active{transform:scale(0.97)}
-input,textarea{font:inherit}table{border-collapse:collapse}td,th{padding:4px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
+input,textarea,select{font:inherit}table{border-collapse:collapse}td,th{padding:4px 10px;border-bottom:1px solid #eee;text-align:left;vertical-align:top}
+textarea{width:100%;box-sizing:border-box;font-size:13px;font-family:ui-monospace,Consolas,monospace}.add label{display:block;margin:12px 0 4px;font-weight:600}
 [id]{scroll-margin-top:70px}.sum{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:6px}
 .sum a{background:#fff;border:1px solid #e5e5e5;border-radius:8px;padding:5px 10px;color:#333;text-decoration:none;font-size:13px}
 .sum a b{font-size:16px;margin-right:5px;color:#1d1d1f}.sum a.hot{background:#fdecea}.sum a.hot b{color:#b3261e}
@@ -35,7 +42,8 @@ PAGES = [("today", "Na dziś", "Co trzeba dziś zrobić, osobno dla każdej osob
          ("waiting", "Czekamy na klienta", "Co klient obiecał nam przysłać i kiedy wolno mu przypomnieć."),
          ("drafts", "Do wysłania", "Gotowe teksty. System niczego nie wysyła: skopiuj, sprawdź, wyślij, kliknij „Wysłane”."),
          ("client", "Klient", "Wszystko o kliencie: kto decyduje, aktualne ustawienia, wstrzymane sprawy i zasady."),
-         ("review", "Przegląd dnia", "Jedno miejsce do przejrzenia raz dziennie: co wysłać, co na dziś, co wymaga decyzji.")]
+         ("review", "Przegląd dnia", "Jedno miejsce do przejrzenia raz dziennie: co wysłać, co na dziś, co wymaga decyzji."),
+         ("add", "+ Dodaj rozmowę", "Wgraj transkrypt nowej rozmowy. Model wyciąga z niego sprawy, a panel od razu je pokazuje.")]
 
 STATE_PL = {"open": "do zrobienia", "conditional": "czeka na warunek", "pending_approval": "czeka na zgodę",
             "deferred": "wstrzymane", "blocked": "zablokowane", "active": "obowiązuje", "closed": "zamknięte",
@@ -64,6 +72,10 @@ class App:
     def __init__(self, db_path: str, fixed_day: str | None = None):
         self.db_path = db_path
         self.fixed_day = fixed_day
+        self.root = Path(db_path).resolve().parent
+        self.jobs: dict[int, dict] = {}
+        self.ids = itertools.count(1)
+        self.lock = threading.Lock()
 
     def db(self):
         return store.connect(self.db_path)
@@ -260,17 +272,24 @@ def summary(db, c: str, day: str) -> str:
              (f"/review?{q}", amb, "niejasności do przejrzenia", False)]
     out = "".join(f"<a class='{'hot' if hot and k else ''}' href='{h}'><b>{k}</b>{e(t)}</a>" for h, k, t, hot in chips if k or h.endswith(("zadania", "przypomnienia")))
     calls = " · ".join(f"rozmowa {e(pl_date(x['date']))}: <a href='/transcript?{q}&call={e(x['id'])}'>{e(x['transcript'])}</a>" for x in store.calls(db, c))
-    return f"<div class=sum>{out}</div><p class=meta style='margin:0 0 18px'>Źródła (transkrypty w rejestrze): {calls}</p>"
+    return (f"<div class=sum>{out}</div><p class=meta style='margin:0 0 18px'>Źródła (transkrypty w rejestrze): {calls} · "
+            f"<a href='/add?{q}'>+ dodaj nową rozmowę</a></p>")
 
 
 def layout(db, c: str, day: str, page: str, body: str) -> str:
     title, lead = next(((t, ld) for p, t, ld in PAGES if p == page), ("", ""))
-    nav = "".join(f"<a class='{'on' if p == page else ''}' href='/{p}?c={e(c)}&day={e(day)}'>{t}</a>" for p, t, _ in PAGES)
+    nav = "".join(f"<a class='{'on' if p == page else ''}' href='/{p}?c={e(c)}&day={e(day)}'>{t}</a>" for p, t, _ in PAGES if c or p == "add")
     head = f"<h1>{e(title)}</h1><p class=lead>{e(lead)}</p>" if title else ""
+    custs = store.customers(db)
+    if len(custs) > 1:
+        pick = "<select name=c onchange='this.form.submit()'>" + "".join(f"<option value='{e(x)}'{' selected' if x == c else ''}>{e(x.replace('_', ' ').title())}</option>" for x in custs) + "</select>"
+    else:
+        pick = f"<input type=hidden name=c value='{e(c)}'>"
+    brand = e(c.replace('_', ' ').title()) if c else "Asystent konta"
     return (f"<!doctype html><html lang=pl><meta charset=utf-8><title>{e(title or 'Asystent konta')}</title><style>{CSS}</style>"
-            f"<nav><b>{e(c.replace('_', ' ').title())}</b>{nav}"
-            f"<form><input type=hidden name=c value='{e(c)}'><span class=meta>Stan na: {e(day_pl(day))}</span><input type=date name=day value={e(day)}><button>Pokaż</button></form></nav>"
-            f"<main>{summary(db, c, day)}{head}{body}</main>{OPEN_HASH}</html>")
+            f"<nav><b>{brand}</b>{nav}"
+            f"<form>{pick}<span class=meta>Stan na: {e(day_pl(day))}</span><input type=date name=day value={e(day)}><button>Pokaż</button></form></nav>"
+            f"<main>{summary(db, c, day) if c else ''}{head}{body}</main>{OPEN_HASH}</html>")
 
 
 def transcript_page(app: App, db, c: str, day: str, call_id: str) -> str:
@@ -295,11 +314,176 @@ def _day(raw: str | None, default: str) -> str:
         return default
 
 
+UPLOAD_JS = ("<script>var f=document.getElementById('file');if(f)f.onchange=function(){var x=this.files[0];if(!x)return;"
+             "document.getElementById('name').value=x.name;x.text().then(function(t){document.getElementById('text').value=t})}</script>")
+
+FORMAT_HELP = """# Klient × Rinvo: tytuł rozmowy
+
+20 października 2026, Google Meet.
+
+## Uczestnicy
+
+- **Kasia Malinowska**, BDC, Klient, kasia@firma.pl
+- **Marek Rewoliński**, Rinvo, marek@rinvo.io
+
+## Transkrypcja
+
+**Kasia:** Dzień dobry.
+
+**Marek:** Dzień dobry, to zaczynamy."""
+
+
+def _save_transcript(app: App, stem: str, text: str) -> Path:
+    folder = app.root / "transcripts"
+    folder.mkdir(exist_ok=True)
+    base = re.sub(r"[^a-z0-9-]+", "_", fold(stem)).strip("_-") or "rozmowa"
+    path, n = folder / f"{base}.md", 2
+    while path.exists() and path.read_text(encoding="utf-8").replace("\r\n", "\n") != text:
+        path, n = folder / f"{base}_{n}.md", n + 1
+    path.write_text(text, encoding="utf-8", newline="\n")
+    return path
+
+
+def _rel(path: Path) -> str:
+    try:
+        return os.path.relpath(path).replace("\\", "/")
+    except ValueError:
+        return str(path)
+
+
+def start_job(app: App, path: str, date: str | None, extraction: str | None = None) -> int | None:
+    with app.lock:
+        if any(j["state"] == "running" for j in app.jobs.values()):
+            return None
+        job = {"id": next(app.ids), "state": "running", "log": [], "path": path, "date": date, "error": "", "prompt": "", "customer": "", "call": ""}
+        app.jobs[job["id"]] = job
+
+    def work():
+        try:
+            out = run(path, app.db_path, str(app.root / "out"), extraction, date, log=job["log"].append)
+            job.update(state="done", customer=out.parent.name, call=out.name)
+        except NeedsExtraction as ex:
+            job.update(state="manual", prompt=str(ex))
+        except (ValidationFailed, llm.LLMError, SystemExit) as ex:
+            job.update(state="error", error=str(ex))
+        except Exception as ex:
+            job.update(state="error", error=f"{type(ex).__name__}: {ex}")
+
+    threading.Thread(target=work, daemon=True).start()
+    return job["id"]
+
+
+def job_view(job: dict, c: str, day: str) -> str:
+    log = "".join(f"<div class=meta>{e(x)}</div>" for x in job["log"])
+    src = f"<p class=meta>Transkrypt zapisany jako <code>{e(job['path'])}</code>.</p>"
+    if job["state"] == "running":
+        return (f"<div class='card warn'><b>Przetwarzam rozmowę…</b> Model czyta transkrypt, zwykle trwa to 1-3 minuty. Strona odświeża się sama.</div>{src}{log}"
+                "<script>setTimeout(function(){location.reload()},3000)</script>")
+    if job["state"] == "done":
+        q = f"c={e(job['customer'])}&day={e(job['call'])}"
+        return (f"<div class='card ok'><b>Gotowe.</b> Rozmowa z {e(pl_date(job['call']))} jest w rejestrze.</div>{src}{log}"
+                f"<p><a href='/today?{q}'>Zobacz sprawy na dzień rozmowy →</a> · <a href='/review?{q}'>Przegląd dnia →</a> · "
+                f"<a href='/transcript?{q}&call={e(job['call'])}'>Transkrypt →</a></p>")
+    if job["state"] == "manual":
+        prompt = Path(job["prompt"]).read_text(encoding="utf-8")
+        return (f"<div class='card warn'><b>Brak klucza API, więc zrób ten krok ręcznie.</b> Transkrypt jest zapisany i sprawdzony.</div>{src}"
+                "<form method=post action=/add/response class='card add'>"
+                "<label>1. Skopiuj prompt i wklej go w Claude</label>"
+                f"<textarea id=prompt rows=8 readonly>{e(prompt)}</textarea>"
+                "<button type=button onclick=\"navigator.clipboard.writeText(document.getElementById('prompt').value);this.textContent='Skopiowane'\">Kopiuj prompt</button>"
+                "<label>2. Wklej tutaj całą odpowiedź modelu (JSON)</label>"
+                "<textarea name=response rows=8 required></textarea>"
+                f"<input type=hidden name=job value={job['id']}><input type=hidden name=c value='{e(c)}'><input type=hidden name=day value='{e(day)}'>"
+                "<p><button>Przetwórz odpowiedź</button></p></form>")
+    return (f"<div class='card err'><b>Nie udało się.</b> Nic nie zostało dodane do rejestru.<pre>{e(job['error'])}</pre></div>{src}{log}"
+            f"<p><a href='/add?c={e(c)}&day={e(day)}'>← Spróbuj jeszcze raz</a></p>")
+
+
+def add_page(app: App, db, c: str, day: str, qs: dict, values: dict | None = None, notice: str = "") -> str:
+    jid = qs.get("job", [""])[0]
+    if jid.isdigit() and int(jid) in app.jobs:
+        return layout(db, c, day, "add", job_view(app.jobs[int(jid)], c, day))
+    v = values or {}
+    if os.environ.get("ANTHROPIC_API_KEY"):
+        status = "<div class='card ok'>Klucz API jest ustawiony: po kliknięciu model sam przeczyta rozmowę.</div>"
+    else:
+        status = ("<div class='card warn'><b>Panel działa bez klucza API.</b> Rozmowę i tak dodasz: panel da Ci prompt do wklejenia w Claude i pole na odpowiedź. "
+                  "Żeby działało samo, uruchom panel z ustawionym <code>ANTHROPIC_API_KEY</code>.</div>")
+    calls = "".join(f"<li>{e(x['customer'].replace('_', ' ').title())}, {e(pl_date(x['date']))}: <code>{e(x['transcript'])}</code></li>"
+                    for cu in store.customers(db) for x in store.calls(db, cu))
+    body = (f"{status}{notice}<form method=post action=/add class='card add'>"
+            "<label>1. Wybierz plik z transkryptem (.md lub .txt)</label><input type=file id=file accept='.md,.txt,text/plain,text/markdown'>"
+            "<label>albo wklej treść</label>"
+            f"<textarea id=text name=text rows=12 required>{e(v.get('text', ''))}</textarea>"
+            f"<input type=hidden id=name name=name value='{e(v.get('name', ''))}'>"
+            "<label>2. Data rozmowy <span class=meta style='font-weight:400'>(tylko jeśli nie ma jej w nagłówku)</span></label>"
+            f"<input type=date name=date value='{e(v.get('date', ''))}'>{v.get('confirm', '')}"
+            f"<input type=hidden name=c value='{e(c)}'><input type=hidden name=day value='{e(day)}'>"
+            "<p><button>Przetwórz rozmowę</button></p></form>"
+            f"<details><summary>Jak ma wyglądać transkrypt</summary><pre>{e(FORMAT_HELP)}</pre></details>"
+            f"<h2>Rozmowy w rejestrze</h2><ul class=meta>{calls or '<li>Jeszcze żadnej.</li>'}</ul>"
+            f"<p class=meta>Nowe transkrypty trafiają do folderu <code>transcripts/</code>, a wyniki do <code>out/</code>.</p>{UPLOAD_JS}")
+    return layout(db, c, day, "add", body)
+
+
+def add_submit(app: App, form: dict) -> tuple[int, str]:
+    db = app.db()
+    custs = store.customers(db)
+    c = form.get("c", [""])[0]
+    c = c if c in custs else (custs[0] if custs else "")
+    day = _day(form.get("day", [None])[0], app.fixed_day or today_iso())
+    text = form.get("text", [""])[0].replace("\r\n", "\n")
+    name, date = form.get("name", [""])[0], form.get("date", [""])[0] or None
+    values = {"text": text, "name": name, "date": date or ""}
+
+    def again(msg: str, cls: str = "err") -> tuple[int, str]:
+        return 200, add_page(app, db, c, day, {}, values, f"<div class='card {cls}'>{msg}</div>")
+
+    if not text.strip():
+        return again("Brak treści transkryptu.")
+    if date and _day(date, "") != date:
+        return again("Zła data rozmowy.")
+    tmp = app.root / "transcripts" / ".upload.md"
+    tmp.parent.mkdir(exist_ok=True)
+    tmp.write_text(text, encoding="utf-8", newline="\n")
+    try:
+        t = load(str(tmp), dt.date.fromisoformat(date) if date else None)
+    finally:
+        tmp.unlink()
+    if t.call_date is None:
+        return again("Nie znalazłem daty rozmowy w nagłówku. Wpisz ją w polu „Data rozmowy”.")
+    if not t.turns:
+        return again("Nie znalazłem wypowiedzi. Każda musi zaczynać się od imienia w gwiazdkach, np. <code>**Kasia:** Dzień dobry.</code>")
+    customer, call = slug(t.customer or Path(name or "rozmowa").stem), t.call_date.isoformat()
+    if any(x["id"] == call for x in store.calls(db, customer)) and not form.get("confirm"):
+        values["confirm"] = ("<div class='card warn'><label style='font-weight:400'><input type=checkbox name=confirm value=1> "
+                             "Tak, przetwórz ponownie. Sprawy z tej rozmowy i kliknięte przy nich zdarzenia zostaną zastąpione.</label></div>")
+        return again(f"Rozmowa z {e(pl_date(call))} dla klienta {e(customer.replace('_', ' ').title())} już jest w rejestrze. Zaznacz potwierdzenie niżej, jeśli chcesz ją przetworzyć jeszcze raz.", "warn")
+    path = _save_transcript(app, Path(name).stem if name else f"{customer}_{call}", text)
+    jid = start_job(app, _rel(path), date)
+    if jid is None:
+        return again("Trwa przetwarzanie innej rozmowy. Poczekaj, aż się skończy.", "warn")
+    return 303, f"/add?job={jid}&c={urllib.parse.quote(c)}&day={day}"
+
+
+def add_response(app: App, form: dict) -> tuple[int, str]:
+    jid = form.get("job", [""])[0]
+    job = app.jobs.get(int(jid)) if jid.isdigit() else None
+    c, day = form.get("c", [""])[0], form.get("day", [""])[0]
+    if not job or job["state"] != "manual":
+        return 303, f"/add?c={urllib.parse.quote(c)}&day={day}"
+    resp = Path(job["prompt"]).parent / "pasted_response.json"
+    resp.write_text(form.get("response", [""])[0], encoding="utf-8")
+    new = start_job(app, job["path"], job["date"], str(resp))
+    return 303, f"/add?job={new or job['id']}&c={urllib.parse.quote(c)}&day={day}"
+
+
 def render_page(app: App, page: str, qs: dict) -> str:
     db = app.db()
     custs = store.customers(db)
-    if not custs:
-        return "<p>Brak danych. Uruchom <code>python -m callstate TRANSKRYPCJA</code>.</p>"
+    if page == "add" or not custs:
+        c = qs.get("c", [custs[0] if custs else ""])[0]
+        return add_page(app, db, c if c in custs else (custs[0] if custs else ""), _day(qs.get("day", [None])[0], app.fixed_day or today_iso()), qs)
     c = qs.get("c", [custs[0]])[0]
     if c not in custs:
         c = custs[0]
@@ -375,6 +559,9 @@ def serve(db_path: str, port: int = 8765, fixed_day: str | None = None) -> None:
                 return self._send(303, "", back if back.startswith("/") and not back.startswith("//") else "/today")
             if self.path == "/check":
                 return self._send(200, check_page(app, form))
+            if self.path in ("/add", "/add/response"):
+                code, body = (add_submit if self.path == "/add" else add_response)(app, form)
+                return self._send(code, "", body) if code == 303 else self._send(code, body)
             self._send(404, "not found")
 
         def log_message(self, *a):
